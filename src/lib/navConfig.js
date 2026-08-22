@@ -1,0 +1,120 @@
+import {
+  LayoutDashboard,
+  ShoppingCart,
+  Package,
+  Store,
+  Users,
+  Wallet,
+  Megaphone,
+  FileText,
+  Headset,
+  UserCog,
+  BarChart3,
+} from "lucide-react";
+
+/* Full information architecture. Every module is reachable from the sidebar;
+   modules without a real page yet render <ComingSoon />. */
+const navConfig = [
+  { type: "link", id: "home", href: "/", label: "داشبورد", icon: LayoutDashboard, exact: true },
+  {
+    type: "group",
+    id: "orders",
+    label: "سفارشات",
+    icon: ShoppingCart,
+    items: [
+      { href: "/orders", label: "لیست سفارشات", exact: true },
+      { href: "/orders/abandoned", label: "سفارشات رها‌شده" },
+    ],
+  },
+  {
+    type: "group",
+    id: "catalog",
+    label: "کاتالوگ محصولات",
+    icon: Package,
+    items: [
+      { href: "/products", label: "همه محصولات", exact: true },
+      { href: "/products/new", label: "افزودن محصول" },
+      { href: "/products/categories", label: "دسته‌بندی‌ها" },
+      { href: "/products/brands", label: "برندها" },
+      { href: "/products/types", label: "نوع محصول" },
+      { href: "/products/dynamic-price", label: "قیمت‌گذاری پویا" },
+      { href: "/products/labels", label: "برچسب‌ها" },
+      { href: "/products/reviews", label: "نقد و بررسی" },
+    ],
+  },
+  {
+    type: "group",
+    id: "vendors",
+    label: "فروشندگان",
+    icon: Store,
+    items: [
+      { href: "/vendors", label: "همه فروشندگان", exact: true },
+      { href: "/vendors/products", label: "محصولات فروشندگان" },
+    ],
+  },
+  { type: "link", id: "customers", href: "/customers", label: "مشتریان", icon: Users },
+  {
+    type: "group",
+    id: "analytics",
+    label: "آنالیتیکس",
+    icon: BarChart3,
+    items: [
+      { href: "/analytics", label: "نمای کلی", exact: true },
+      { href: "/analytics/sessions", label: "جلسات بازدیدکنندگان" },
+    ],
+  },
+  {
+    type: "group",
+    id: "financial",
+    label: "امور مالی",
+    icon: Wallet,
+    items: [
+      { href: "/financial", label: "نمای کلی مالی", exact: true },
+      { href: "/financial/transactions", label: "تراکنش‌های مشتریان" },
+      { href: "/financial/vendors", label: "تسویه فروشندگان" },
+      { href: "/financial/staff", label: "امور مالی همکاران" },
+    ],
+  },
+  {
+    type: "group",
+    id: "marketing",
+    label: "بازاریابی",
+    icon: Megaphone,
+    items: [
+      { href: "/marketing/discounts", label: "کدهای تخفیف", exact: true },
+      { href: "/marketing/campaigns", label: "کمپین‌ها" },
+      { href: "/marketing/modals", label: "مودال‌ساز" },
+    ],
+  },
+  {
+    type: "group",
+    id: "content",
+    label: "محتوا و صفحات",
+    icon: FileText,
+    items: [
+      { href: "/content/blog", label: "بلاگ", exact: true },
+      { href: "/content/blog/categories", label: "دسته‌بندی‌های بلاگ" },
+      { href: "/content/blog/tags", label: "تگ‌های بلاگ" },
+      { href: "/content/blog/author-profile", label: "پروفایل نویسندگی" },
+      { href: "/content/menu-builder", label: "منوساز" },
+      { href: "/content/page-builder", label: "صفحه‌ساز" },
+      { href: "/content/homepage", label: "چیدمان صفحه اصلی" },
+      { href: "/content/faq", label: "سوالات متداول" },
+      { href: "/settings/top-banner", label: "بنر بالای هدر" },
+      { href: "/settings/taxonomy-seo", label: "تنظیمات سئوی دسته/برند/برچسب" },
+    ],
+  },
+  {
+    type: "group",
+    id: "support",
+    label: "پشتیبانی",
+    icon: Headset,
+    items: [
+      { href: "/support/tickets", label: "تیکت‌ها", exact: true },
+      { href: "/support/comments", label: "نظرات محصولات" },
+    ],
+  },
+  { type: "link", id: "staff", href: "/staff", label: "کارکنان", icon: UserCog },
+];
+
+export default navConfig;
