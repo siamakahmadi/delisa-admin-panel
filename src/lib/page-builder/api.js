@@ -21,6 +21,8 @@ export const fetchCmsProducts = (params = {}) =>
 export const fetchCmsCategories = () => apiClient.get("/api/cms/categories").then((r) => unwrapList(r.data, ["categories", "items"]));
 export const fetchCmsBrands = () => apiClient.get("/api/cms/brands").then((r) => unwrapList(r.data, ["brands", "items"]));
 export const fetchCmsTags = () => apiClient.get("/api/cms/tags").then((r) => unwrapList(r.data, ["tags", "items"]));
+export const fetchCmsBlogTags = () => apiClient.get("/api/cms/blog-tags").then((r) => unwrapList(r.data, ["tags", "items"]));
+export const fetchCmsBlogCategories = () => apiClient.get("/api/cms/blog-categories").then((r) => unwrapList(r.data, ["categories", "items"]));
 
 /* ---------------- pages ---------------- */
 export const fetchPages = (params = {}) => apiClient.get("/api/cms/pages", { params }).then((r) => r.data);

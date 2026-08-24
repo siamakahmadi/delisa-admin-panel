@@ -2,10 +2,17 @@
 
 import { useQuery } from "@tanstack/react-query";
 import Select from "react-select";
-import { fetchCmsProducts, fetchCmsCategories, fetchCmsBrands, fetchCmsTags } from "@/lib/page-builder/api";
+import { fetchCmsProducts, fetchCmsCategories, fetchCmsBrands, fetchCmsTags, fetchCmsBlogTags, fetchCmsBlogCategories } from "@/lib/page-builder/api";
 import { cn } from "@/lib/utils";
 
-const FETCHERS = { product: fetchCmsProducts, category: fetchCmsCategories, brand: fetchCmsBrands, tag: fetchCmsTags };
+const FETCHERS = {
+  product: fetchCmsProducts,
+  category: fetchCmsCategories,
+  brand: fetchCmsBrands,
+  tag: fetchCmsTags,
+  blogTag: fetchCmsBlogTags,
+  blogCategory: fetchCmsBlogCategories,
+};
 
 function toOption(item) {
   const value = item.slug || item._id || item.id || item.name;

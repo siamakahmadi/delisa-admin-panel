@@ -104,6 +104,10 @@ function BaseInput({ field, value, onChange }) {
       return <PickerField kind="brand" value={value} onChange={onChange} />;
     case "tagPicker":
       return <PickerField kind="tag" value={value} onChange={onChange} />;
+    case "blogTagPicker":
+      return <PickerField kind="blogTag" value={value} onChange={onChange} />;
+    case "blogCategoryPicker":
+      return <PickerField kind="blogCategory" value={value} onChange={onChange} />;
     case "productSource":
       return <ProductSourceField value={value} onChange={onChange} />;
     case "repeater":

@@ -111,6 +111,7 @@ export default function AnalyticsSessionsPage() {
         data={sessions}
         isLoading={isLoading}
         emptyMessage="جلسه‌ای یافت نشد"
+        rowKey={(row) => row.sessionId}
         onRowClick={(row) => router.push(`/analytics/sessions/${row.sessionId}`)}
         pagination={{ page, pageCount, onPageChange: setPage }}
       />

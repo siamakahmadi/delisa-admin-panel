@@ -10,6 +10,7 @@ import {
   Headset,
   UserCog,
   BarChart3,
+  Sparkles,
 } from "lucide-react";
 
 /* Full information architecture. Every module is reachable from the sidebar;
@@ -101,7 +102,19 @@ const navConfig = [
       { href: "/content/homepage", label: "چیدمان صفحه اصلی" },
       { href: "/content/faq", label: "سوالات متداول" },
       { href: "/settings/top-banner", label: "بنر بالای هدر" },
+      { href: "/settings/footer", label: "تنظیمات فوتر" },
       { href: "/settings/taxonomy-seo", label: "تنظیمات سئوی دسته/برند/برچسب" },
+    ],
+  },
+  {
+    type: "group",
+    id: "ai-assistant",
+    label: "دستیار هوشمند",
+    icon: Sparkles,
+    items: [
+      { href: "/ai", label: "نمای کلی", exact: true },
+      { href: "/ai/conversations", label: "مکالمات" },
+      { href: "/ai/settings", label: "تنظیمات" },
     ],
   },
   {
