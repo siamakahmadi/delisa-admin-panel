@@ -24,6 +24,13 @@ export const fetchCmsTags = () => apiClient.get("/api/cms/tags").then((r) => unw
 export const fetchCmsBlogTags = () => apiClient.get("/api/cms/blog-tags").then((r) => unwrapList(r.data, ["tags", "items"]));
 export const fetchCmsBlogCategories = () => apiClient.get("/api/cms/blog-categories").then((r) => unwrapList(r.data, ["categories", "items"]));
 
+// Beauty Knowledge Hub entities — از endpointهای ادمین (نه عمومی) استفاده
+// می‌کنند تا موجودیت‌های هنوز منتشرنشده هم در PickerField قابل انتخاب
+// باشند (apiClient توکن ادمین را خودکار می‌فرستد).
+export const fetchCmsSkinTypes = () => apiClient.get("/api/admin/beauty/skin-types").then((r) => unwrapList(r.data, ["items"]));
+export const fetchCmsSkinConcerns = () => apiClient.get("/api/admin/beauty/skin-concerns").then((r) => unwrapList(r.data, ["items"]));
+export const fetchCmsIngredients = () => apiClient.get("/api/admin/beauty/ingredients").then((r) => unwrapList(r.data, ["items"]));
+
 /* ---------------- pages ---------------- */
 export const fetchPages = (params = {}) => apiClient.get("/api/cms/pages", { params }).then((r) => r.data);
 export const fetchPageAdmin = (id) => apiClient.get(`/api/cms/pages/admin/${encodeURIComponent(id)}`).then((r) => r.data);

@@ -11,6 +11,8 @@ import {
   UserCog,
   BarChart3,
   Sparkles,
+  Wand2,
+  FlaskConical,
 } from "lucide-react";
 
 /* Full information architecture. Every module is reachable from the sidebar;
@@ -102,8 +104,33 @@ const navConfig = [
       { href: "/content/homepage", label: "چیدمان صفحه اصلی" },
       { href: "/content/faq", label: "سوالات متداول" },
       { href: "/settings/top-banner", label: "بنر بالای هدر" },
+      { href: "/settings/header-quick-tabs", label: "تب‌های دسترسی سریع هدر" },
+      { href: "/settings/product-page", label: "ارسال رایگان و بنرهای صفحه محصول" },
       { href: "/settings/footer", label: "تنظیمات فوتر" },
       { href: "/settings/taxonomy-seo", label: "تنظیمات سئوی دسته/برند/برچسب" },
+    ],
+  },
+  {
+    type: "group",
+    id: "beauty-profile",
+    label: "پروفایل زیبایی",
+    icon: Wand2,
+    items: [
+      { href: "/beauty-profile/settings", label: "فعال‌سازی و تنظیمات", exact: true },
+      { href: "/beauty-profile/questions", label: "سوالات" },
+      { href: "/beauty-profile/responses", label: "پاسخ‌های مشتریان" },
+    ],
+  },
+  {
+    type: "group",
+    id: "beauty-hub",
+    label: "دانشنامه زیبایی",
+    icon: FlaskConical,
+    items: [
+      { href: "/beauty/dashboard", label: "نمای کلی", exact: true },
+      { href: "/beauty/skin-types", label: "انواع پوست" },
+      { href: "/beauty/skin-concerns", label: "دغدغه‌های پوستی" },
+      { href: "/beauty/ingredients", label: "ترکیبات" },
     ],
   },
   {

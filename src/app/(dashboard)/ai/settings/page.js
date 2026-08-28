@@ -18,6 +18,7 @@ const DEFAULTS = {
   maxOutputTokens: 900,
   webSearchEnabled: true,
   productSearchEnabled: true,
+  smartSearchEnabled: true,
   conversationHistoryEnabled: true,
   contextWindowMessages: 16,
   model: { mini: "", full: "" },
@@ -150,6 +151,12 @@ function SettingsForm({ initial, connection }) {
             description="برای سؤالات علمی/عمومی که نیاز به اطلاعات تکمیلی دارند"
             checked={settings.webSearchEnabled}
             onChange={(v) => patch({ webSearchEnabled: v })}
+          />
+          <Toggle
+            label="جستجوی انسانی (زبان طبیعی)"
+            description="جعبه جستجوی سایت مشتری — کاربر با جمله‌ی طبیعی می‌نویسد (مثلاً «ضدآفتاب برای پوست چرب که برق نزنه») و نتیجه واقعی برمی‌گردد."
+            checked={settings.smartSearchEnabled}
+            onChange={(v) => patch({ smartSearchEnabled: v })}
           />
           <Toggle
             label="حافظه مکالمه"

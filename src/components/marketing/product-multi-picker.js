@@ -25,7 +25,7 @@ export function ProductMultiPicker({ value = [], onChange, selectedProducts = []
     queryKey: ["product-picker-search", debounced],
     queryFn: async () => {
       const res = await apiClient.get("/api/admin/products", { params: { search: debounced, limit: 10 } });
-      return res.data?.data ?? [];
+      return res.data?.products ?? [];
     },
     enabled: debounced.trim().length > 0,
   });

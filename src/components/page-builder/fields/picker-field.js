@@ -2,7 +2,17 @@
 
 import { useQuery } from "@tanstack/react-query";
 import Select from "react-select";
-import { fetchCmsProducts, fetchCmsCategories, fetchCmsBrands, fetchCmsTags, fetchCmsBlogTags, fetchCmsBlogCategories } from "@/lib/page-builder/api";
+import {
+  fetchCmsProducts,
+  fetchCmsCategories,
+  fetchCmsBrands,
+  fetchCmsTags,
+  fetchCmsBlogTags,
+  fetchCmsBlogCategories,
+  fetchCmsSkinTypes,
+  fetchCmsSkinConcerns,
+  fetchCmsIngredients,
+} from "@/lib/page-builder/api";
 import { cn } from "@/lib/utils";
 
 const FETCHERS = {
@@ -10,12 +20,23 @@ const FETCHERS = {
   category: fetchCmsCategories,
   brand: fetchCmsBrands,
   tag: fetchCmsTags,
+  tagId: fetchCmsTags,
   blogTag: fetchCmsBlogTags,
   blogCategory: fetchCmsBlogCategories,
+  skinType: fetchCmsSkinTypes,
+  skinConcern: fetchCmsSkinConcerns,
+  ingredient: fetchCmsIngredients,
 };
 
-function toOption(item) {
-  const value = item.slug || item._id || item.id || item.name;
+// Page Builder pickers (tag/brand/category/blogTag/blogCategory) resolve by
+// slug server-side — but Beauty entity relationships (and Beauty's own
+// `tagRef` field) are real Mongoose `ref` ObjectId fields (need populate()
+// to work), so these kinds must use the Mongo _id as the value instead of
+// the slug. "tagId" is the same /api/cms/tags list as "tag", just id-valued.
+const ID_VALUE_KINDS = new Set(["skinType", "skinConcern", "ingredient", "tagId"]);
+
+function toOption(item, kind) {
+  const value = ID_VALUE_KINDS.has(kind) ? item._id || item.id : item.slug || item._id || item.id || item.name;
   const label = item.title || item.name || item.slug || String(value);
   return { value: String(value), label };
 }
@@ -51,7 +72,7 @@ export function PickerField({ kind, value, onChange, isMulti = true }) {
     queryFn: async () => {
       const fetcher = FETCHERS[kind];
       const items = fetcher ? await fetcher() : [];
-      return (Array.isArray(items) ? items : []).map(toOption);
+      return (Array.isArray(items) ? items : []).map((item) => toOption(item, kind));
     },
     enabled: Boolean(FETCHERS[kind]),
     staleTime: 60_000,

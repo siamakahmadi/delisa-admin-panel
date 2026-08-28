@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Home, Smartphone, Flag, Plus, Pencil, Eye, Rocket, PauseCircle, Trash2 } from "lucide-react";
+import { Home, Smartphone, Flag, Sparkles, Plus, Pencil, Eye, Rocket, PauseCircle, Trash2 } from "lucide-react";
 import * as pb from "@/lib/page-builder/api";
 import { PageHeader } from "@/components/layout/page-header";
 import { DataTable } from "@/components/ui/data-table";
@@ -21,9 +21,9 @@ function getPreviewPath(page) {
   // homeMobile has no URL of its own — it's the same / as home, just served
   // to mobile-width requests (see back_end's GET /api/cms/pages/home/mobile
   // and delisa-customer/src/pages/index.js).
-  return page.type === "home" || page.type === "homeMobile"
-    ? "/"
-    : `/landing/${page.slug || ""}`;
+  if (page.type === "home" || page.type === "homeMobile") return "/";
+  if (page.type === "suggest") return "/suggest";
+  return `/landing/${page.slug || ""}`;
 }
 
 export default function PageBuilderListPage() {
@@ -88,6 +88,8 @@ export default function PageBuilderListPage() {
                 <Home size={14} />
               ) : row.type === "homeMobile" ? (
                 <Smartphone size={14} />
+              ) : row.type === "suggest" ? (
+                <Sparkles size={14} />
               ) : (
                 <Flag size={14} />
               )}
@@ -99,6 +101,8 @@ export default function PageBuilderListPage() {
                   ? "صفحه اصلی (دسکتاپ)"
                   : row.type === "homeMobile"
                   ? "صفحه اصلی (موبایل)"
+                  : row.type === "suggest"
+                  ? "پیشنهادهای شخصی‌سازی‌شده"
                   : `لندینگ ${row.slug || ""}`}
               </p>
             </div>
@@ -184,6 +188,7 @@ export default function PageBuilderListPage() {
           <option value="home">صفحه اصلی (دسکتاپ)</option>
           <option value="homeMobile">صفحه اصلی (موبایل)</option>
           <option value="landing">لندینگ</option>
+          <option value="suggest">پیشنهادهای شخصی‌سازی‌شده</option>
         </Select>
       </div>
 
@@ -250,8 +255,9 @@ function CreatePageForm({ onClose, onCreated }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const isFixedSlugType = type === "home" || type === "homeMobile";
-  const finalSlug = type === "home" ? "home" : type === "homeMobile" ? "home-mobile" : slug;
+  const isFixedSlugType = type === "home" || type === "homeMobile" || type === "suggest";
+  const finalSlug =
+    type === "home" ? "home" : type === "homeMobile" ? "home-mobile" : type === "suggest" ? "suggest" : slug;
 
   const handleTitleChange = (v) => {
     setTitle(v);
@@ -266,6 +272,9 @@ function CreatePageForm({ onClose, onCreated }) {
     } else if (next === "homeMobile") {
       setSlugTouched(true);
       setSlug("home-mobile");
+    } else if (next === "suggest") {
+      setSlugTouched(true);
+      setSlug("suggest");
     } else {
       setSlugTouched(false);
       setSlug(slugify(title));
@@ -279,14 +288,20 @@ function CreatePageForm({ onClose, onCreated }) {
       setError("برای لندینگ، اسلاگ لازم است.");
       return;
     }
-    if (type === "landing" && (finalSlug === "home" || finalSlug === "home-mobile")) {
-      setError(`اسلاگ "${finalSlug}" فقط مخصوص صفحه اصلی است.`);
+    if (type === "landing" && (finalSlug === "home" || finalSlug === "home-mobile" || finalSlug === "suggest")) {
+      setError(`اسلاگ "${finalSlug}" رزرو شده است.`);
       return;
     }
     setLoading(true);
     try {
       const defaultTitle =
-        type === "home" ? "صفحه اصلی" : type === "homeMobile" ? "صفحه اصلی (موبایل)" : finalSlug;
+        type === "home"
+          ? "صفحه اصلی"
+          : type === "homeMobile"
+          ? "صفحه اصلی (موبایل)"
+          : type === "suggest"
+          ? "پیشنهادهای شخصی‌سازی‌شده"
+          : finalSlug;
       const payload = { type, title: title || defaultTitle, slug: finalSlug };
       if (internalName.trim()) payload.internalName = internalName.trim();
       const res = await pb.createPage(payload);
@@ -302,7 +317,7 @@ function CreatePageForm({ onClose, onCreated }) {
     <form onSubmit={handleSubmit} className="mt-4 space-y-4">
       <div>
         <Label>نوع صفحه</Label>
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-2 gap-2">
           <button
             type="button"
             onClick={() => switchType("home")}
@@ -329,6 +344,15 @@ function CreatePageForm({ onClose, onCreated }) {
             <Flag size={16} className="mb-1 text-[var(--text-muted)]" />
             <p className="font-medium text-[var(--text)]">لندینگ پیج</p>
             <p className="text-[var(--text-faint)]">در /landing/اسلاگ نمایش داده می‌شود</p>
+          </button>
+          <button
+            type="button"
+            onClick={() => switchType("suggest")}
+            className={`rounded-[var(--radius-md)] border p-3 text-start text-xs ${type === "suggest" ? "border-[var(--brand-500)] bg-[var(--brand-50)]" : "border-[var(--border)]"}`}
+          >
+            <Sparkles size={16} className="mb-1 text-[var(--text-muted)]" />
+            <p className="font-medium text-[var(--text)]">پیشنهادهای شخصی‌سازی‌شده</p>
+            <p className="text-[var(--text-faint)]">در /suggest — بر اساس Beauty Profile هر مشتری</p>
           </button>
         </div>
       </div>
