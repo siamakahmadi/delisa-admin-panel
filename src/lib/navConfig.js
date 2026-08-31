@@ -13,6 +13,9 @@ import {
   Sparkles,
   Wand2,
   FlaskConical,
+  Film,
+  Gem,
+  Plug,
 } from "lucide-react";
 
 /* Full information architecture. Every module is reachable from the sidebar;
@@ -110,6 +113,9 @@ const navConfig = [
       { href: "/settings/taxonomy-seo", label: "تنظیمات سئوی دسته/برند/برچسب" },
     ],
   },
+  { type: "link", id: "feed", href: "/feed", label: "فید", icon: Film },
+  { type: "link", id: "loyalty", href: "/loyalty", label: "باشگاه مشتریان", icon: Gem },
+  { type: "link", id: "mcp-integration", href: "/integrations/mcp", label: "اتصال Claude (MCP)", icon: Plug },
   {
     type: "group",
     id: "beauty-profile",

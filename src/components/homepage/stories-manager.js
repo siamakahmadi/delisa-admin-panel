@@ -10,10 +10,10 @@ import { Badge } from "@/components/ui/badge";
 import { Input, Label } from "@/components/ui/input";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useToast } from "@/components/ui/toast";
-import { fetchSliders, createSlider, updateSlider, deleteSlider, fetchHeroSliderSettings, saveHeroSliderSettings } from "@/lib/homepage/api";
+import { fetchStories, createStory, updateStory, deleteStory, fetchStoriesSettings, saveStoriesSettings } from "@/lib/homepage/api";
 import { SectionEnableToggle } from "@/components/homepage/section-enable-toggle";
 
-export function SlidersManager() {
+export function StoriesManager() {
   const toast = useToast();
   const queryClient = useQueryClient();
 
@@ -21,15 +21,15 @@ export function SlidersManager() {
   const [creating, setCreating] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
 
-  const { data, isLoading } = useQuery({ queryKey: ["home-sliders"], queryFn: fetchSliders });
+  const { data, isLoading } = useQuery({ queryKey: ["home-stories"], queryFn: fetchStories });
   const items = data ?? [];
   const active = editing || creating;
 
   const saveMutation = useMutation({
-    mutationFn: (formData) => (editing ? updateSlider(editing._id, formData) : createSlider(formData)),
+    mutationFn: (formData) => (editing ? updateStory(editing._id, formData) : createStory(formData)),
     onSuccess: () => {
-      toast.success(editing ? "اسلایدر بروزرسانی شد" : "اسلایدر ایجاد شد");
-      queryClient.invalidateQueries({ queryKey: ["home-sliders"] });
+      toast.success(editing ? "استوری بروزرسانی شد" : "استوری ایجاد شد");
+      queryClient.invalidateQueries({ queryKey: ["home-stories"] });
       setEditing(null);
       setCreating(false);
     },
@@ -37,10 +37,10 @@ export function SlidersManager() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id) => deleteSlider(id),
+    mutationFn: (id) => deleteStory(id),
     onSuccess: () => {
       toast.success("حذف شد");
-      queryClient.invalidateQueries({ queryKey: ["home-sliders"] });
+      queryClient.invalidateQueries({ queryKey: ["home-stories"] });
       setDeleteTarget(null);
     },
     onError: () => toast.error("حذف ناموفق بود"),
@@ -51,7 +51,7 @@ export function SlidersManager() {
       key: "image",
       header: "تصویر",
       render: (row) => (
-        <div className="flex h-10 w-16 shrink-0 items-center justify-center overflow-hidden rounded-[var(--radius-sm)] bg-[var(--surface-muted)]">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--surface-muted)]">
           {row.image ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={row.image} alt="" className="h-full w-full object-cover" />
@@ -61,7 +61,8 @@ export function SlidersManager() {
         </div>
       ),
     },
-    { key: "title", header: "عنوان", render: (row) => <span className="font-medium">{row.title}</span> },
+    { key: "title", header: "عنوان", render: (row) => <span className="font-medium">{row.title || "—"}</span> },
+    { key: "durationSeconds", header: "مدت نمایش", render: (row) => `${row.durationSeconds ?? 6} ثانیه` },
     { key: "order", header: "ترتیب", render: (row) => row.order ?? 0 },
     {
       key: "isPublished",
@@ -94,28 +95,30 @@ export function SlidersManager() {
       {!active ? (
         <>
           <SectionEnableToggle
-            queryKey={["hero-slider-settings"]}
-            fetchFn={fetchHeroSliderSettings}
-            saveFn={saveHeroSliderSettings}
-            label="نمایش سکشن اسلایدر هیرو در صفحه اصلی"
+            queryKey={["stories-settings"]}
+            fetchFn={fetchStoriesSettings}
+            saveFn={saveStoriesSettings}
+            label="نمایش استوری‌ها در صفحه اصلی"
           />
           <div className="mb-4 flex items-center justify-between">
-            <p className="text-sm text-[var(--text-muted)]">اسلایدهای بنر اصلی صفحه اول سایت — به‌ترتیب عدد «ترتیب» نمایش داده می‌شوند.</p>
+            <p className="text-sm text-[var(--text-muted)]">
+              استوری‌ها به‌صورت یک ردیف آواتار بالای صفحه‌ی اصلی نمایش داده می‌شوند و با لمس، به‌ترتیب عدد «ترتیب» به‌صورت تمام‌صفحه پخش می‌شوند.
+            </p>
             <Button onClick={() => { setEditing(null); setCreating(true); }}>
               <Plus size={16} />
-              افزودن اسلاید
+              افزودن استوری
             </Button>
           </div>
           <DataTable
             columns={columns}
             data={items}
             isLoading={isLoading}
-            emptyMessage="اسلایدی یافت نشد"
+            emptyMessage="استوری‌ای یافت نشد"
             onRowClick={(row) => { setCreating(false); setEditing(row); }}
           />
         </>
       ) : (
-        <SliderForm
+        <StoryForm
           key={editing?._id ?? "new"}
           editing={editing}
           isPending={saveMutation.isPending}
@@ -127,8 +130,8 @@ export function SlidersManager() {
       <ConfirmDialog
         open={!!deleteTarget}
         onOpenChange={(open) => !open && setDeleteTarget(null)}
-        title="حذف اسلاید"
-        description="این اسلاید برای همیشه حذف می‌شود. آیا مطمئن هستید؟"
+        title="حذف استوری"
+        description="این استوری برای همیشه حذف می‌شود. آیا مطمئن هستید؟"
         loading={deleteMutation.isPending}
         onConfirm={() => deleteMutation.mutate(deleteTarget._id)}
       />
@@ -136,17 +139,14 @@ export function SlidersManager() {
   );
 }
 
-function SliderForm({ editing, isPending, onCancel, onSubmit }) {
+function StoryForm({ editing, isPending, onCancel, onSubmit }) {
   const toast = useToast();
   const fileRef = useRef(null);
   const [preview, setPreview] = useState(editing?.image || "");
-  const [removeImage, setRemoveImage] = useState(false);
   const [form, setForm] = useState({
     title: editing?.title || "",
-    description: editing?.description || "",
-    callToAction: editing?.callToAction || "",
-    color: editing?.color || "",
     link: editing?.link || "",
+    durationSeconds: editing?.durationSeconds ?? 6,
     order: editing?.order ?? 0,
     isPublished: editing?.isPublished ?? true,
   });
@@ -157,26 +157,21 @@ function SliderForm({ editing, isPending, onCancel, onSubmit }) {
     const file = e.target.files?.[0];
     if (!file) return;
     setPreview(URL.createObjectURL(file));
-    setRemoveImage(false);
   };
 
   const handleSubmit = () => {
-    if (!form.title.trim()) {
-      toast.error("عنوان الزامی است");
+    if (!editing && !fileRef.current?.files?.[0]) {
+      toast.error("تصویر استوری الزامی است");
       return;
     }
     const fd = new FormData();
     fd.append("title", form.title.trim());
-    fd.append("description", form.description);
-    fd.append("callToAction", form.callToAction);
-    fd.append("color", form.color);
-    fd.append("link", form.link);
+    fd.append("link", form.link.trim());
+    fd.append("durationSeconds", String(form.durationSeconds || 6));
     fd.append("order", String(form.order || 0));
     fd.append("isPublished", String(!!form.isPublished));
     if (fileRef.current?.files?.[0]) {
       fd.append("image", fileRef.current.files[0]);
-    } else if (editing && removeImage) {
-      fd.append("removeImage", "true");
     }
     onSubmit(fd);
   };
@@ -184,31 +179,33 @@ function SliderForm({ editing, isPending, onCancel, onSubmit }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{editing ? `ویرایش اسلاید: ${editing.title}` : "اسلاید جدید"}</CardTitle>
+        <CardTitle>{editing ? `ویرایش استوری: ${editing.title || "بدون عنوان"}` : "استوری جدید"}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <div>
-          <Label>تصویر اسلاید</Label>
+          <Label>تصویر استوری (عمودی، پیشنهاد نسبت ۹:۱۶)</Label>
           {preview ? (
-            <div className="relative h-32 w-full max-w-sm overflow-hidden rounded-[var(--radius-md)] border border-[var(--border)]">
+            <div className="relative h-48 w-28 overflow-hidden rounded-[var(--radius-md)] border border-[var(--border)]">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={preview} alt="" className="h-full w-full object-cover" />
               <div className="absolute inset-x-0 bottom-0 flex justify-end gap-1.5 bg-gradient-to-t from-black/60 to-transparent p-2">
                 <Button size="sm" variant="secondary" onClick={() => fileRef.current?.click()}>تعویض</Button>
-                <Button
-                  size="sm"
-                  variant="danger"
-                  onClick={() => { setPreview(""); setRemoveImage(true); if (fileRef.current) fileRef.current.value = ""; }}
-                >
-                  <X size={13} />
-                </Button>
+                {editing && (
+                  <Button
+                    size="sm"
+                    variant="danger"
+                    onClick={() => { setPreview(""); if (fileRef.current) fileRef.current.value = ""; }}
+                  >
+                    <X size={13} />
+                  </Button>
+                )}
               </div>
             </div>
           ) : (
             <button
               type="button"
               onClick={() => fileRef.current?.click()}
-              className="flex h-24 w-full max-w-sm flex-col items-center justify-center gap-1 rounded-[var(--radius-md)] border border-dashed border-[var(--border)] text-[var(--text-faint)] hover:border-[var(--brand-500)] hover:text-[var(--brand-500)]"
+              className="flex h-48 w-28 flex-col items-center justify-center gap-1 rounded-[var(--radius-md)] border border-dashed border-[var(--border)] text-[var(--text-faint)] hover:border-[var(--brand-500)] hover:text-[var(--brand-500)]"
             >
               <ImagePlus size={18} />
               <span className="text-xs">انتخاب تصویر</span>
@@ -219,28 +216,19 @@ function SliderForm({ editing, isPending, onCancel, onSubmit }) {
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
-            <Label>عنوان</Label>
-            <Input value={form.title} onChange={(e) => patch({ title: e.target.value })} placeholder="مثلاً: تابستانه" />
+            <Label>عنوان (اختیاری)</Label>
+            <Input value={form.title} onChange={(e) => patch({ title: e.target.value })} placeholder="مثلاً: تخفیف ویژه" />
           </div>
           <div>
-            <Label>متن CTA</Label>
-            <Input value={form.callToAction} onChange={(e) => patch({ callToAction: e.target.value })} placeholder="مثلاً: خرید کن" />
+            <Label>لینک مقصد (اختیاری)</Label>
+            <Input dir="ltr" value={form.link} onChange={(e) => patch({ link: e.target.value })} placeholder="/archive یا https://..." />
           </div>
         </div>
 
-        <div>
-          <Label>توضیحات</Label>
-          <Input value={form.description} onChange={(e) => patch({ description: e.target.value })} placeholder="متن کوتاه روی اسلاید" />
-        </div>
-
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
-            <Label>لینک مقصد</Label>
-            <Input dir="ltr" value={form.link} onChange={(e) => patch({ link: e.target.value })} placeholder="/landing/sale یا https://..." />
-          </div>
-          <div>
-            <Label>رنگ (HEX)</Label>
-            <Input dir="ltr" value={form.color} onChange={(e) => patch({ color: e.target.value })} placeholder="#ff6600" />
+            <Label>مدت نمایش (ثانیه)</Label>
+            <Input type="number" min={2} max={30} value={form.durationSeconds} onChange={(e) => patch({ durationSeconds: Number(e.target.value) })} />
           </div>
           <div>
             <Label>ترتیب نمایش</Label>

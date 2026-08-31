@@ -2,7 +2,7 @@ import apiClient from "@/lib/apiClient";
 
 function normalizeList(data) {
   if (Array.isArray(data)) return data;
-  return data?.sliders || data?.brands || data?.items || [];
+  return data?.sliders || data?.brands || data?.stories || data?.items || [];
 }
 
 // ---- sliders ----
@@ -21,3 +21,26 @@ export const deleteHomeBrand = (id) => apiClient.delete(`/api/admin/brands/${id}
 export const fetchHomeIntro = () => apiClient.get("/api/admin/settings/home-intro").then((r) => r.data?.homeIntro);
 export const saveHomeIntro = (homeIntro) =>
   apiClient.put("/api/admin/settings/home-intro", { homeIntro }).then((r) => r.data?.homeIntro);
+
+// ---- section on/off switches (محتوای خودشون جای دیگه مدیریت می‌شه، این
+// فقط تعیین می‌کنه کل سکشن تو صفحه‌ی اصلی رندر بشه یا نه) ----
+export const fetchHeroSliderSettings = () =>
+  apiClient.get("/api/admin/settings/hero-slider").then((r) => r.data?.heroSlider);
+export const saveHeroSliderSettings = (enabled) =>
+  apiClient.put("/api/admin/settings/hero-slider", { enabled }).then((r) => r.data?.heroSlider);
+
+export const fetchBrandsSectionSettings = () =>
+  apiClient.get("/api/admin/settings/brands-section").then((r) => r.data?.brandsSection);
+export const saveBrandsSectionSettings = (enabled) =>
+  apiClient.put("/api/admin/settings/brands-section", { enabled }).then((r) => r.data?.brandsSection);
+
+// ---- stories (Instagram-style, row of avatars -> fullscreen viewer) ----
+export const fetchStories = () => apiClient.get("/api/admin/stories").then((r) => normalizeList(r.data));
+export const createStory = (formData) => apiClient.post("/api/admin/stories", formData).then((r) => r.data);
+export const updateStory = (id, formData) => apiClient.put(`/api/admin/stories/${id}`, formData).then((r) => r.data);
+export const deleteStory = (id) => apiClient.delete(`/api/admin/stories/${id}`).then((r) => r.data);
+
+export const fetchStoriesSettings = () =>
+  apiClient.get("/api/admin/settings/stories").then((r) => r.data?.stories);
+export const saveStoriesSettings = (enabled) =>
+  apiClient.put("/api/admin/settings/stories", { enabled }).then((r) => r.data?.stories);

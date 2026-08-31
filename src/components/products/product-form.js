@@ -98,6 +98,7 @@ export function ProductForm({ product }) {
   const [badges, setBadges] = useState(product?.badges ?? []);
   const [campaignTags, setCampaignTags] = useState(product?.campaignTags ?? []);
   const [bundleSupport, setBundleSupport] = useState(product?.bundleSupport ?? false);
+  const [originalBadge, setOriginalBadge] = useState(product?.originalBadge ?? false);
   const [weightGrams, setWeightGrams] = useState(product?.dimensions?.weightGrams ?? "");
   const [heightCm, setHeightCm] = useState(product?.dimensions?.heightCm ?? "");
   const [widthCm, setWidthCm] = useState(product?.dimensions?.widthCm ?? "");
@@ -188,6 +189,7 @@ export function ProductForm({ product }) {
     fd.append("badges", JSON.stringify(badges));
     fd.append("campaignTags", JSON.stringify(campaignTags));
     fd.append("bundleSupport", bundleSupport ? "true" : "false");
+    fd.append("originalBadge", originalBadge ? "true" : "false");
     fd.append(
       "dimensions",
       JSON.stringify({
@@ -487,6 +489,15 @@ export function ProductForm({ product }) {
               <Label>برچسب کمپین</Label>
               <TagInput value={campaignTags} onChange={setCampaignTags} placeholder="مثلاً یلدا..." />
             </div>
+            <label className="flex items-center justify-between rounded-[var(--radius-md)] bg-[var(--surface-muted)] p-3 text-sm">
+              <span>بج «ضمانت اصالت کالا»</span>
+              <input
+                type="checkbox"
+                checked={originalBadge}
+                onChange={(e) => setOriginalBadge(e.target.checked)}
+                className="h-4 w-4 accent-[var(--brand-600)]"
+              />
+            </label>
           </Section>
 
           <Section title="اطلاعات تکمیلی">

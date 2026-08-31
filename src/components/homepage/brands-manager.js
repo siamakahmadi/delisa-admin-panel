@@ -10,7 +10,8 @@ import { Badge } from "@/components/ui/badge";
 import { Input, Label } from "@/components/ui/input";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useToast } from "@/components/ui/toast";
-import { fetchHomeBrands, createHomeBrand, updateHomeBrand, deleteHomeBrand } from "@/lib/homepage/api";
+import { fetchHomeBrands, createHomeBrand, updateHomeBrand, deleteHomeBrand, fetchBrandsSectionSettings, saveBrandsSectionSettings } from "@/lib/homepage/api";
+import { SectionEnableToggle } from "@/components/homepage/section-enable-toggle";
 
 export function BrandsManager() {
   const toast = useToast();
@@ -93,6 +94,12 @@ export function BrandsManager() {
     <div>
       {!active ? (
         <>
+          <SectionEnableToggle
+            queryKey={["brands-section-settings"]}
+            fetchFn={fetchBrandsSectionSettings}
+            saveFn={saveBrandsSectionSettings}
+            label="نمایش سکشن برندها در صفحه اصلی"
+          />
           <div className="mb-4 flex items-center justify-between">
             <p className="text-sm text-[var(--text-muted)]">لوگوهای برندهای همکار که در صفحه اصلی نمایش داده می‌شوند.</p>
             <Button onClick={() => { setEditing(null); setCreating(true); }}>
