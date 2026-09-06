@@ -59,10 +59,10 @@ function LabelEditor({ tag, id }) {
   const { data: categories } = useCategories();
 
   const { data: searchResults, isFetching: searching } = useQuery({
-    queryKey: ["products-search", debouncedSearch, categoryFilter],
+    queryKey: ["products-search-for-tag", debouncedSearch, categoryFilter],
     queryFn: async () =>
       (
-        await apiClient.get("/api/admin/products", {
+        await apiClient.get("/api/admin/products/search-for-tag", {
           params: { search: debouncedSearch || undefined, category: categoryFilter || undefined, limit: 12 },
         })
       ).data,

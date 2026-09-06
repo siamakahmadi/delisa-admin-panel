@@ -58,7 +58,16 @@ const navConfig = [
       { href: "/vendors/products", label: "محصولات فروشندگان" },
     ],
   },
-  { type: "link", id: "customers", href: "/customers", label: "مشتریان", icon: Users },
+  {
+    type: "group",
+    id: "crm",
+    label: "مشتریان و CRM",
+    icon: Users,
+    items: [
+      { href: "/customers", label: "لیست مشتریان", exact: true },
+      { href: "/crm", label: "سگمنت، کمپین و اتوماسیون" },
+    ],
+  },
   {
     type: "group",
     id: "analytics",
@@ -110,6 +119,7 @@ const navConfig = [
       { href: "/settings/header-quick-tabs", label: "تب‌های دسترسی سریع هدر" },
       { href: "/settings/product-page", label: "ارسال رایگان و بنرهای صفحه محصول" },
       { href: "/settings/footer", label: "تنظیمات فوتر" },
+      { href: "/settings/whatsapp-widget", label: "ویجت واتس‌اپ" },
       { href: "/settings/taxonomy-seo", label: "تنظیمات سئوی دسته/برند/برچسب" },
     ],
   },

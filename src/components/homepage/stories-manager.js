@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus, Pencil, Trash2, Save, ImageOff, ImagePlus, X } from "lucide-react";
+import { Plus, Pencil, Trash2, Save, ImageOff, ImagePlus, X, Eye, Video } from "lucide-react";
 import { DataTable } from "@/components/ui/data-table";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -48,11 +48,16 @@ export function StoriesManager() {
 
   const columns = [
     {
-      key: "image",
-      header: "تصویر",
+      key: "media",
+      header: "رسانه",
       render: (row) => (
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--surface-muted)]">
-          {row.image ? (
+        <div className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--surface-muted)]">
+          {row.mediaType === "video" && row.video ? (
+            <>
+              <video src={row.video} className="h-full w-full object-cover" muted playsInline preload="metadata" />
+              <Video size={12} className="absolute bottom-0 right-0 rounded-full bg-black/60 p-0.5 text-white" />
+            </>
+          ) : row.image ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={row.image} alt="" className="h-full w-full object-cover" />
           ) : (
@@ -62,6 +67,16 @@ export function StoriesManager() {
       ),
     },
     { key: "title", header: "عنوان", render: (row) => <span className="font-medium">{row.title || "—"}</span> },
+    {
+      key: "views",
+      header: "بازدید",
+      render: (row) => (
+        <span className="inline-flex items-center gap-1 text-[var(--text-muted)]">
+          <Eye size={13} />
+          {(row.views ?? 0).toLocaleString("fa-IR")}
+        </span>
+      ),
+    },
     { key: "durationSeconds", header: "مدت نمایش", render: (row) => `${row.durationSeconds ?? 6} ثانیه` },
     { key: "order", header: "ترتیب", render: (row) => row.order ?? 0 },
     {
@@ -142,7 +157,8 @@ export function StoriesManager() {
 function StoryForm({ editing, isPending, onCancel, onSubmit }) {
   const toast = useToast();
   const fileRef = useRef(null);
-  const [preview, setPreview] = useState(editing?.image || "");
+  const [preview, setPreview] = useState(editing?.mediaType === "video" ? editing?.video || "" : editing?.image || "");
+  const [previewIsVideo, setPreviewIsVideo] = useState(editing?.mediaType === "video");
   const [form, setForm] = useState({
     title: editing?.title || "",
     link: editing?.link || "",
@@ -156,12 +172,13 @@ function StoryForm({ editing, isPending, onCancel, onSubmit }) {
   const onFilePicked = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    setPreviewIsVideo(file.type.startsWith("video/"));
     setPreview(URL.createObjectURL(file));
   };
 
   const handleSubmit = () => {
     if (!editing && !fileRef.current?.files?.[0]) {
-      toast.error("تصویر استوری الزامی است");
+      toast.error("تصویر یا ویدیوی استوری الزامی است");
       return;
     }
     const fd = new FormData();
@@ -171,7 +188,7 @@ function StoryForm({ editing, isPending, onCancel, onSubmit }) {
     fd.append("order", String(form.order || 0));
     fd.append("isPublished", String(!!form.isPublished));
     if (fileRef.current?.files?.[0]) {
-      fd.append("image", fileRef.current.files[0]);
+      fd.append("media", fileRef.current.files[0]);
     }
     onSubmit(fd);
   };
@@ -183,11 +200,15 @@ function StoryForm({ editing, isPending, onCancel, onSubmit }) {
       </CardHeader>
       <CardContent className="space-y-4">
         <div>
-          <Label>تصویر استوری (عمودی، پیشنهاد نسبت ۹:۱۶)</Label>
+          <Label>تصویر یا ویدیوی استوری (عمودی، پیشنهاد نسبت ۹:۱۶)</Label>
           {preview ? (
             <div className="relative h-48 w-28 overflow-hidden rounded-[var(--radius-md)] border border-[var(--border)]">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={preview} alt="" className="h-full w-full object-cover" />
+              {previewIsVideo ? (
+                <video src={preview} className="h-full w-full object-cover" muted autoPlay loop playsInline />
+              ) : (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={preview} alt="" className="h-full w-full object-cover" />
+              )}
               <div className="absolute inset-x-0 bottom-0 flex justify-end gap-1.5 bg-gradient-to-t from-black/60 to-transparent p-2">
                 <Button size="sm" variant="secondary" onClick={() => fileRef.current?.click()}>تعویض</Button>
                 {editing && (
@@ -208,10 +229,10 @@ function StoryForm({ editing, isPending, onCancel, onSubmit }) {
               className="flex h-48 w-28 flex-col items-center justify-center gap-1 rounded-[var(--radius-md)] border border-dashed border-[var(--border)] text-[var(--text-faint)] hover:border-[var(--brand-500)] hover:text-[var(--brand-500)]"
             >
               <ImagePlus size={18} />
-              <span className="text-xs">انتخاب تصویر</span>
+              <span className="text-xs">انتخاب تصویر/ویدیو</span>
             </button>
           )}
-          <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={onFilePicked} />
+          <input ref={fileRef} type="file" accept="image/*,video/*" className="hidden" onChange={onFilePicked} />
         </div>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
