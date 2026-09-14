@@ -19,9 +19,10 @@ import { SeoOverview } from "@/components/seo/seo-overview";
 import { SeoIssues } from "@/components/seo/seo-issues";
 import { SeoPages } from "@/components/seo/seo-pages";
 import { SeoSettings } from "@/components/seo/seo-settings";
+import { SeoAutofix } from "@/components/seo/seo-autofix";
 import { formatDateTime } from "@/lib/utils";
 
-const TABS = ["overview", "issues", "pages", "history", "settings"];
+const TABS = ["overview", "issues", "pages", "autofix", "history", "settings"];
 
 function HistoryTab() {
   const { data, isLoading } = useQuery({ queryKey: ["seo-audits"], queryFn: () => fetchSeoAudits(40) });
@@ -149,6 +150,7 @@ function SeoCenter() {
             {audit?.counts?.errors > 0 && <span className="mr-1.5 rounded-full bg-[var(--danger)] px-1.5 text-[10px] text-white">{Number(audit.counts.errors).toLocaleString("fa-IR")}</span>}
           </TabsTrigger>
           <TabsTrigger value="pages">صفحات</TabsTrigger>
+          <TabsTrigger value="autofix">✨ رفع خودکار</TabsTrigger>
           <TabsTrigger value="history">تاریخچه</TabsTrigger>
           <TabsTrigger value="settings">تنظیمات</TabsTrigger>
         </TabsList>
@@ -186,6 +188,10 @@ function SeoCenter() {
 
         <TabsContent value="pages">
           {audit ? <SeoPages auditId={audit._id} initialType={params.get("type") || ""} /> : <p className="text-sm text-[var(--text-muted)]">ابتدا یک ممیزی اجرا کنید.</p>}
+        </TabsContent>
+
+        <TabsContent value="autofix">
+          {audit ? <SeoAutofix /> : <p className="text-sm text-[var(--text-muted)]">ابتدا یک ممیزی اجرا کنید.</p>}
         </TabsContent>
 
         <TabsContent value="history">
