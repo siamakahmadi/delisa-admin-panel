@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Save, ScanSearch, Play, Square, Upload, Image as ImageIcon, HardDrive, AlertTriangle } from "lucide-react";
+import { Save, ScanSearch, Play, Square, Upload, Image as ImageIcon, HardDrive, AlertTriangle, MonitorPlay, ShoppingBag, Megaphone, Newspaper } from "lucide-react";
 import apiClient from "@/lib/apiClient";
 import { PageHeader } from "@/components/layout/page-header";
 import { Card, CardContent } from "@/components/ui/card";
@@ -45,6 +45,15 @@ export default function ImageOptimizationPage() {
         <Skeleton className="h-72 w-full max-w-3xl" />
       ) : (
         <SettingsForm initial={data?.imageOptimization || {}} defaults={data?.defaults || {}} />
+      )}
+
+      {isLoading ? (
+        <Skeleton className="h-56 w-full max-w-3xl" />
+      ) : (
+        <ContextSettings
+          initial={data?.imageOptimization?.contexts || {}}
+          contextDefaults={data?.contextDefaults || {}}
+        />
       )}
 
       <TestOptimizer />
@@ -138,15 +147,130 @@ function SettingsForm({ initial, defaults }) {
   );
 }
 
+const CONTEXT_META = {
+  slider: { label: "اسلایدر صفحه‌ی اصلی", hint: "عرض کامل صفحه روی دسکتاپ — نیاز به رزولوشن بالاتر از عکس محصول دارد.", icon: MonitorPlay },
+  banner: { label: "بنرهای کمپین", hint: "بنرهای عریض داخل صفحات و کمپین‌ها.", icon: Megaphone },
+  product: { label: "تصاویر محصول", hint: "در قاب کارت/گالری محصول دیده می‌شوند؛ نیازی به رزولوشن اسلایدر ندارند.", icon: ShoppingBag },
+  blog: { label: "تصاویر بلاگ", hint: "کاور و تصاویر داخل مقالات.", icon: Newspaper },
+};
+
+// چرا این بخش لازم بود: قبلاً همه‌ی آپلودها (اسلایدر عریض دسکتاپ و عکس
+// کوچک محصول) از یک سقف مشترک پیروی می‌کردند. وقتی اسلایدرهای ۵۰۰۰px+
+// بازپردازش شدند، به همان سقف عمومی (۲۰۰۰px) افت کردند و روی مانیتور
+// بزرگ توسط مرورگر بزرگ‌نمایی و تار دیده شدند. حالا هر بخش سقف/کیفیت
+// مخصوص خودش را دارد و از همین‌جا هم دستی قابل‌تنظیم است.
+function ContextSettings({ initial, contextDefaults }) {
+  const toast = useToast();
+  const queryClient = useQueryClient();
+  const keys = Object.keys(contextDefaults || {});
+  const [values, setValues] = useState(() =>
+    Object.fromEntries(keys.map((k) => [k, { ...contextDefaults[k], ...(initial[k] || {}) }]))
+  );
+  const patch = (key, fields) => setValues((prev) => ({ ...prev, [key]: { ...prev[key], ...fields } }));
+
+  const saveMutation = useMutation({
+    mutationFn: () =>
+      apiClient.put("/api/admin/images/settings", {
+        imageOptimization: {
+          contexts: Object.fromEntries(
+            keys.map((k) => [
+              k,
+              {
+                enabled: values[k].enabled,
+                maxWidth: Number(values[k].maxWidth),
+                maxHeight: Number(values[k].maxHeight),
+                quality: Number(values[k].quality),
+              },
+            ])
+          ),
+        },
+      }),
+    onSuccess: () => {
+      toast.success("تنظیمات بخش‌ها ذخیره شد");
+      queryClient.invalidateQueries({ queryKey: ["image-optimization-settings"] });
+    },
+    onError: (e) => toast.error(e?.response?.data?.error || "ذخیره ناموفق بود"),
+  });
+
+  if (!keys.length) return null;
+
+  return (
+    <Card className="max-w-3xl">
+      <CardContent className="space-y-5">
+        <div>
+          <div className="flex items-center gap-2 text-sm font-semibold text-[var(--text)]">
+            <ImageIcon size={16} className="text-[var(--brand-600)]" />
+            تنظیمات اختصاصی هر بخش
+          </div>
+          <p className="mt-1 text-xs leading-6 text-[var(--text-muted)]">
+            این مقادیر برای همان بخش، تنظیمات سراسری بالا را بازنویسی می‌کنند — مثلاً اسلایدر می‌تواند رزولوشن بالاتری از عکس محصول نگه دارد بدون این‌که سقف عمومی را برای همه بالا ببرید.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          {keys.map((key) => {
+            const meta = CONTEXT_META[key] || { label: key, hint: "" };
+            const Icon = meta.icon || ImageIcon;
+            const v = values[key] || {};
+            return (
+              <div key={key} className="rounded-[var(--radius-md)] border border-[var(--border)] p-3.5">
+                <div className="mb-1 flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 text-sm font-medium text-[var(--text)]">
+                    <Icon size={15} className="text-[var(--brand-500)]" />
+                    {meta.label}
+                  </div>
+                  <label className="flex items-center gap-1.5 text-xs text-[var(--text-muted)]">
+                    <input
+                      type="checkbox"
+                      checked={v.enabled !== false}
+                      onChange={(e) => patch(key, { enabled: e.target.checked })}
+                      className="h-3.5 w-3.5 accent-[var(--brand-600)]"
+                    />
+                    فعال
+                  </label>
+                </div>
+                <p className="mb-3 text-[11px] leading-5 text-[var(--text-faint)]">{meta.hint}</p>
+                <div className="grid grid-cols-3 gap-2">
+                  <div>
+                    <Label className="text-[11px]">عرض (px)</Label>
+                    <Input type="number" min={200} max={6000} value={v.maxWidth ?? ""} onChange={(e) => patch(key, { maxWidth: e.target.value })} />
+                  </div>
+                  <div>
+                    <Label className="text-[11px]">ارتفاع (px)</Label>
+                    <Input type="number" min={200} max={6000} value={v.maxHeight ?? ""} onChange={(e) => patch(key, { maxHeight: e.target.value })} />
+                  </div>
+                  <div>
+                    <Label className="text-[11px]">کیفیت</Label>
+                    <Input type="number" min={40} max={100} value={v.quality ?? ""} onChange={(e) => patch(key, { quality: e.target.value })} />
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="flex justify-end">
+          <Button loading={saveMutation.isPending} onClick={() => saveMutation.mutate()}>
+            <Save size={16} />
+            ذخیره تنظیمات بخش‌ها
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 function TestOptimizer() {
   const toast = useToast();
   const inputRef = useRef(null);
   const [result, setResult] = useState(null);
   const [fileName, setFileName] = useState("");
+  const [context, setContext] = useState("");
   const testMutation = useMutation({
     mutationFn: (file) => {
       const fd = new FormData();
       fd.append("file", file);
+      if (context) fd.append("context", context);
       return apiClient.post("/api/admin/images/test", fd).then((r) => r.data?.result);
     },
     onSuccess: (r) => setResult(r),
@@ -160,8 +284,20 @@ function TestOptimizer() {
           <ImageIcon size={16} className="text-[var(--brand-600)]" />
           تست تنظیمات روی یک تصویر
         </div>
-        <p className="text-xs text-[var(--text-muted)]">یک تصویر انتخاب کنید تا ببینید با تنظیمات ذخیره‌شده چقدر کوچک می‌شود. چیزی آپلود یا ذخیره نمی‌شود.</p>
+        <p className="text-xs text-[var(--text-muted)]">یک تصویر انتخاب کنید تا ببینید با تنظیمات همان بخش چقدر کوچک می‌شود. چیزی آپلود یا ذخیره نمی‌شود.</p>
         <div className="flex flex-wrap items-center gap-3">
+          <select
+            value={context}
+            onChange={(e) => setContext(e.target.value)}
+            className="h-9 rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface)] px-2.5 text-sm text-[var(--text)] outline-none focus:border-[var(--brand-500)]"
+          >
+            <option value="">تنظیمات سراسری</option>
+            {Object.entries(CONTEXT_META).map(([k, m]) => (
+              <option key={k} value={k}>
+                {m.label}
+              </option>
+            ))}
+          </select>
           <input
             ref={inputRef}
             type="file"

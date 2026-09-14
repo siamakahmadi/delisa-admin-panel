@@ -92,7 +92,11 @@ export default function AnalyticsOverviewPage() {
           <CardTitle>روند بازدید</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="h-72 w-full">
+          {/* Recharts does not support RTL — its internal x-coordinate math assumes
+              LTR, so under the page's dir="rtl" the axis/bars/labels get computed
+              on the wrong side of each other and overlap. Force ltr on the chart's
+              own wrapper only (page around it stays rtl). */}
+          <div className="h-72 w-full" dir="ltr">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={trend}>
                 <defs>
@@ -130,7 +134,7 @@ export default function AnalyticsOverviewPage() {
             <CardTitle>پرترافیک‌ترین صفحات</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-72 w-full">
+            <div className="h-72 w-full" dir="ltr">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={topPages} layout="vertical" margin={{ left: 24 }}>
                   <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" horizontal={false} />
@@ -159,7 +163,7 @@ export default function AnalyticsOverviewPage() {
             <CardTitle>تفکیک دستگاه</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-56 w-full">
+            <div className="h-56 w-full" dir="ltr">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie data={deviceBreakdown} dataKey="count" nameKey="device" innerRadius={45} outerRadius={75} paddingAngle={2}>

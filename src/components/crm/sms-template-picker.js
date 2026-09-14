@@ -1,6 +1,14 @@
 "use client";
 
+import { useState } from "react";
+import { Plus } from "lucide-react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Select } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { Input, Label } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { useToast } from "@/components/ui/toast";
+import { createSmsTemplate, updateSmsTemplate } from "@/lib/crm/api";
 
 // Shared purpose catalog + a small "pick from registered templates" select,
 // reused by both the SMS templates tab and the campaign/automation editors
@@ -17,17 +25,124 @@ export const SMS_PURPOSES = [
 
 export const SMS_PURPOSE_LABELS = Object.fromEntries(SMS_PURPOSES);
 
+// فرم ثبت/ویرایش قالب پیامک — هم از تب «قالب‌های پیامک» و هم به‌صورت
+// درون‌خطی از خودِ SmsTemplateField (وقتی هنوز قالبی برای این بخش ثبت
+// نشده) استفاده می‌شود تا کاربر مجبور نباشد میان‌کار فرمش را رها کند و
+// دنبال تب مدیریت قالب‌ها بگردد.
+export function SmsTemplateEditor({ open, onOpenChange, template, defaultPurpose, onSaved }) {
+  const toast = useToast();
+  const queryClient = useQueryClient();
+  const isEdit = !!template;
+  const [name, setName] = useState(template?.name || "");
+  const [bodyId, setBodyId] = useState(template?.bodyId || "");
+  const [purpose, setPurpose] = useState(template?.purpose || defaultPurpose || SMS_PURPOSES[0][0]);
+  const [variables, setVariables] = useState((template?.variables || []).join(","));
+  const [description, setDescription] = useState(template?.description || "");
+
+  const saveMutation = useMutation({
+    mutationFn: () => {
+      const payload = {
+        name,
+        bodyId,
+        purpose,
+        description,
+        variables: variables.split(",").map((s) => s.trim()).filter(Boolean),
+      };
+      return isEdit ? updateSmsTemplate(template._id, payload) : createSmsTemplate(payload);
+    },
+    onSuccess: (saved) => {
+      toast.success(isEdit ? "قالب بروزرسانی شد" : "قالب ثبت شد");
+      queryClient.invalidateQueries({ queryKey: ["sms-templates"] });
+      onOpenChange(false);
+      onSaved?.(saved);
+    },
+    onError: (err) => toast.error(err?.response?.data?.message || "ذخیره ناموفق بود"),
+  });
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-md">
+        <DialogTitle>{isEdit ? "ویرایش قالب پیامک" : "ثبت قالب پیامک جدید"}</DialogTitle>
+        <DialogDescription>
+          شناسه (bodyId) را از پنل ملی‌پیامک، بعد از تایید شدن الگوی متن پیامک، اینجا بچسبانید تا بقیه‌ی بخش‌های سیستم بتوانند آن را انتخاب کنند.
+        </DialogDescription>
+
+        <div className="mt-4 space-y-3">
+          <div>
+            <Label>عنوان قالب (برای خودتان)</Label>
+            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="مثلاً خوش‌آمدگویی مشتری جدید" />
+          </div>
+          <div>
+            <Label>شناسه الگو (bodyId) از پنل ملی‌پیامک</Label>
+            <Input value={bodyId} onChange={(e) => setBodyId(e.target.value)} placeholder="مثلاً 123456" dir="ltr" />
+          </div>
+          <div>
+            <Label>این قالب برای کدام بخش است؟</Label>
+            <Select value={purpose} onChange={(e) => setPurpose(e.target.value)}>
+              {SMS_PURPOSES.map(([val, label]) => (
+                <option key={val} value={val}>
+                  {label}
+                </option>
+              ))}
+            </Select>
+          </div>
+          <div>
+            <Label>ترتیب متغیرهای الگو (با کاما — مثلاً name)</Label>
+            <Input value={variables} onChange={(e) => setVariables(e.target.value)} placeholder="name" dir="ltr" />
+            <p className="mt-1 text-xs text-[var(--text-faint)]">
+              همان ترتیبی که موقع تایید الگو در پنل ملی‌پیامک برای %%1%%، %%2%%... تعریف کردید.
+            </p>
+          </div>
+          <div>
+            <Label>یادداشت / متن دقیق الگو (اختیاری)</Label>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={2}
+              className="w-full rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface)] p-3 text-sm outline-none focus:border-[var(--brand-500)] focus:ring-2 focus:ring-[var(--brand-100)]"
+            />
+          </div>
+
+          <Button
+            className="w-full"
+            disabled={!name.trim() || !bodyId.trim()}
+            loading={saveMutation.isPending}
+            onClick={() => saveMutation.mutate()}
+          >
+            ذخیره
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 // A select that lists SMS templates matching `purpose` first (falls back to
 // showing every template if none match yet) — choosing one fills the
 // message's smsBodyId/smsVars from the catalog instead of free typing.
+// وقتی هنوز قالبی ثبت نشده (یا قالب مناسب این بخش وجود ندارد)، دکمه‌ی
+// «+ افزودن قالب» همین‌جا فرم ثبت قالب را باز می‌کند — کاربر لازم نیست
+// از وسط ساخت کمپین/اتوماسیون بیرون برود و دنبال تب «قالب‌های پیامک»
+// بگردد.
 export function SmsTemplateField({ purpose, templates, smsBodyId, onSelect }) {
+  const [editorOpen, setEditorOpen] = useState(false);
   const all = templates ?? [];
   const matching = all.filter((t) => t.purpose === purpose);
   const options = matching.length ? matching : all;
 
   return (
     <div className="rounded-[var(--radius-md)] bg-[var(--warning-bg)] p-3">
-      <label className="mb-1.5 block text-xs font-medium text-[var(--text-muted)]">قالب پیامک</label>
+      <div className="mb-1.5 flex items-center justify-between">
+        <label className="block text-xs font-medium text-[var(--text-muted)]">قالب پیامک</label>
+        <button
+          type="button"
+          onClick={() => setEditorOpen(true)}
+          className="inline-flex items-center gap-1 text-[11px] font-medium text-[var(--brand-600)] hover:underline"
+        >
+          <Plus size={12} />
+          افزودن قالب
+        </button>
+      </div>
       <Select
         value={smsBodyId ?? ""}
         onChange={(e) => {
@@ -44,13 +159,24 @@ export function SmsTemplateField({ purpose, templates, smsBodyId, onSelect }) {
       </Select>
       {!options.length && (
         <p className="mt-1.5 text-xs text-[var(--warning)]">
-          هنوز قالبی ثبت نشده — از تب «قالب‌های پیامک» یکی اضافه کنید.
+          هنوز قالبی ثبت نشده — با دکمه‌ی «افزودن قالب» بالا یکی بسازید، یا از تب «قالب‌های پیامک» مدیریتش کنید.
         </p>
       )}
       {!matching.length && all.length > 0 && (
         <p className="mt-1.5 text-xs text-[var(--text-faint)]">
           قالبی مخصوص این بخش ثبت نشده؛ فعلاً از بین همه‌ی قالب‌ها انتخاب کنید.
         </p>
+      )}
+
+      {editorOpen && (
+        <SmsTemplateEditor
+          open={editorOpen}
+          onOpenChange={setEditorOpen}
+          defaultPurpose={purpose}
+          onSaved={(saved) => {
+            if (saved) onSelect(saved);
+          }}
+        />
       )}
     </div>
   );
