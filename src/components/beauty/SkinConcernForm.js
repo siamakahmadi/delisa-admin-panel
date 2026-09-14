@@ -45,8 +45,8 @@ export default function SkinConcernForm({ editing }) {
 
   const [relatedProductTags, setRelatedProductTags] = useState(idsOf(editing?.relatedProductTags));
   const [relatedProductsLimit, setRelatedProductsLimit] = useState(editing?.relatedProductsLimit ?? 8);
-  const [relatedBlogTags, setRelatedBlogTags] = useState((editing?.relatedBlogTags || []).map((t) => (typeof t === "string" ? t : t?.slug)).filter(Boolean));
-  const [relatedBlogCategories, setRelatedBlogCategories] = useState((editing?.relatedBlogCategories || []).map((t) => (typeof t === "string" ? t : t?.slug)).filter(Boolean));
+  const [relatedBlogTags, setRelatedBlogTags] = useState(idsOf(editing?.relatedBlogTags));
+  const [relatedBlogCategories, setRelatedBlogCategories] = useState(idsOf(editing?.relatedBlogCategories));
   const [relatedArticlesLimit, setRelatedArticlesLimit] = useState(editing?.relatedArticlesLimit ?? 4);
 
   const [commonMistakes, setCommonMistakes] = useState((editing?.commonMistakes || []).map((i) => ({ a: i.title, b: i.description })));
@@ -210,11 +210,11 @@ export default function SkinConcernForm({ editing }) {
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
                   <Label>تگ‌های بلاگ مرتبط</Label>
-                  <PickerField kind="blogTag" value={relatedBlogTags} onChange={setRelatedBlogTags} />
+                  <PickerField kind="blogTagId" value={relatedBlogTags} onChange={setRelatedBlogTags} />
                 </div>
                 <div>
                   <Label>دسته‌بندی‌های بلاگ مرتبط</Label>
-                  <PickerField kind="blogCategory" value={relatedBlogCategories} onChange={setRelatedBlogCategories} />
+                  <PickerField kind="blogCategoryId" value={relatedBlogCategories} onChange={setRelatedBlogCategories} />
                 </div>
               </div>
               <div className="max-w-[200px]">

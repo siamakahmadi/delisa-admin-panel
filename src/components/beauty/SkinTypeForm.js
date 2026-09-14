@@ -17,13 +17,10 @@ import { useToast } from "@/components/ui/toast";
 import { asciiSlugify, isValidBeautySlug } from "@/lib/beauty/slug";
 import { skinTypesApi } from "@/lib/beauty/api";
 
-// PickerField resolves skinType/skinConcern/ingredient/tagId relationships
-// by Mongo _id (real ref fields), but blogTag/blogCategory still by slug.
+// All relationship fields here (incl. relatedBlogTags/Categories) are real
+// Mongoose ref fields, so PickerField must use the id-valued kinds.
 function idsOf(list) {
   return (list || []).map((t) => (typeof t === "string" ? t : t?._id)).filter(Boolean);
-}
-function slugsOf(list) {
-  return (list || []).map((t) => (typeof t === "string" ? t : t?.slug)).filter(Boolean);
 }
 
 export default function SkinTypeForm({ editing }) {
@@ -42,8 +39,8 @@ export default function SkinTypeForm({ editing }) {
   const [commonConcerns, setCommonConcerns] = useState(idsOf(editing?.commonConcerns));
   const [relatedIngredients, setRelatedIngredients] = useState(idsOf(editing?.relatedIngredients));
   const [relatedProductsLimit, setRelatedProductsLimit] = useState(editing?.relatedProductsLimit ?? 8);
-  const [relatedBlogTags, setRelatedBlogTags] = useState(slugsOf(editing?.relatedBlogTags));
-  const [relatedBlogCategories, setRelatedBlogCategories] = useState(slugsOf(editing?.relatedBlogCategories));
+  const [relatedBlogTags, setRelatedBlogTags] = useState(idsOf(editing?.relatedBlogTags));
+  const [relatedBlogCategories, setRelatedBlogCategories] = useState(idsOf(editing?.relatedBlogCategories));
   const [relatedArticlesLimit, setRelatedArticlesLimit] = useState(editing?.relatedArticlesLimit ?? 4);
 
   const [commonMistakes, setCommonMistakes] = useState((editing?.commonMistakes || []).map((i) => ({ a: i.title, b: i.description })));
@@ -167,11 +164,11 @@ export default function SkinTypeForm({ editing }) {
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
                   <Label>تگ‌های بلاگ مرتبط</Label>
-                  <PickerField kind="blogTag" value={relatedBlogTags} onChange={setRelatedBlogTags} />
+                  <PickerField kind="blogTagId" value={relatedBlogTags} onChange={setRelatedBlogTags} />
                 </div>
                 <div>
                   <Label>دسته‌بندی‌های بلاگ مرتبط</Label>
-                  <PickerField kind="blogCategory" value={relatedBlogCategories} onChange={setRelatedBlogCategories} />
+                  <PickerField kind="blogCategoryId" value={relatedBlogCategories} onChange={setRelatedBlogCategories} />
                 </div>
               </div>
               <div className="max-w-[200px]">

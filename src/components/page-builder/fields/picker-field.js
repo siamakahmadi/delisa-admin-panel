@@ -23,6 +23,8 @@ const FETCHERS = {
   tagId: fetchCmsTags,
   blogTag: fetchCmsBlogTags,
   blogCategory: fetchCmsBlogCategories,
+  blogTagId: fetchCmsBlogTags,
+  blogCategoryId: fetchCmsBlogCategories,
   skinType: fetchCmsSkinTypes,
   skinConcern: fetchCmsSkinConcerns,
   ingredient: fetchCmsIngredients,
@@ -32,8 +34,11 @@ const FETCHERS = {
 // slug server-side — but Beauty entity relationships (and Beauty's own
 // `tagRef` field) are real Mongoose `ref` ObjectId fields (need populate()
 // to work), so these kinds must use the Mongo _id as the value instead of
-// the slug. "tagId" is the same /api/cms/tags list as "tag", just id-valued.
-const ID_VALUE_KINDS = new Set(["skinType", "skinConcern", "ingredient", "tagId"]);
+// the slug. "tagId"/"blogTagId"/"blogCategoryId" are the same lists as
+// "tag"/"blogTag"/"blogCategory", just id-valued (Beauty relatedBlogTags /
+// relatedBlogCategories are ObjectId refs too — sending slugs there fails
+// with a CastError on save).
+const ID_VALUE_KINDS = new Set(["skinType", "skinConcern", "ingredient", "tagId", "blogTagId", "blogCategoryId"]);
 
 function toOption(item, kind) {
   const value = ID_VALUE_KINDS.has(kind) ? item._id || item.id : item.slug || item._id || item.id || item.name;

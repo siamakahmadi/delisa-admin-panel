@@ -22,6 +22,7 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { useToast } from "@/components/ui/toast";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
@@ -30,6 +31,21 @@ import { formatToman } from "@/lib/utils";
 
 const LIMIT = 20;
 const fmt = (n) => Number(n || 0).toLocaleString("fa-IR");
+
+// گزینه‌های خروجی: هر گروه اگه هر دو (یا هیچ‌کدوم) تیک بخوره یعنی «همه».
+const EXPORT_OPTIONS = [
+  { group: "status", key: "published", label: "منتشر شده" },
+  { group: "status", key: "draft", label: "پیش‌نویس (منتشر نشده)" },
+  { group: "stock", key: "inStock", label: "موجود" },
+  { group: "stock", key: "outOfStock", label: "ناموجود" },
+];
+const DEFAULT_EXPORT_SELECTION = { published: true, draft: true, inStock: true, outOfStock: true };
+
+function exportSelectionToParams(sel) {
+  const status = sel.published && !sel.draft ? "published" : sel.draft && !sel.published ? "draft" : undefined;
+  const stock = sel.inStock && !sel.outOfStock ? "inStock" : sel.outOfStock && !sel.inStock ? "outOfStock" : undefined;
+  return { status, stock };
+}
 
 function downloadBlob(blob, filename) {
   const url = window.URL.createObjectURL(blob);
@@ -50,11 +66,15 @@ export default function ProductsPage() {
   const [typeSlug, setTypeSlug] = useState("");
   const [categorySlug, setCategorySlug] = useState("");
   const [status, setStatus] = useState("");
+  const [stock, setStock] = useState("");
   const [page, setPage] = useState(1);
   const debouncedSearch = useDebouncedValue(search);
 
   const [exportingExcel, setExportingExcel] = useState(false);
   const [exportingNames, setExportingNames] = useState(false);
+  // دیالوگ انتخاب نوع محصولات برای خروجی (متنی یا اکسل)
+  const [exportDialog, setExportDialog] = useState(null); // null | "names" | "excel"
+  const [exportSelection, setExportSelection] = useState(DEFAULT_EXPORT_SELECTION);
 
   const { data: brands } = useBrands();
   const { data: productTypes } = useProductTypes();
@@ -66,6 +86,7 @@ export default function ProductsPage() {
     productType: typeSlug || undefined,
     category: categorySlug || undefined,
     status: status || undefined,
+    stock: stock || undefined,
   };
 
   const { data: summary, isLoading: summaryLoading } = useQuery({
@@ -86,11 +107,31 @@ export default function ProductsPage() {
   const products = data?.products ?? [];
   const pageCount = Math.max(data?.pages ?? 1, 1);
 
-  const exportExcel = async () => {
+  const openExportDialog = (kind) => {
+    // پیش‌فرض دیالوگ = همون فیلترهای فعال جدول، تا رفتار قبلی حفظ بشه
+    setExportSelection({
+      published: status !== "draft",
+      draft: status !== "published",
+      inStock: stock !== "outOfStock",
+      outOfStock: stock !== "inStock",
+    });
+    setExportDialog(kind);
+  };
+
+  const exportSelectionValid = (exportSelection.published || exportSelection.draft) && (exportSelection.inStock || exportSelection.outOfStock);
+
+  const runExport = () => {
+    const kind = exportDialog;
+    setExportDialog(null);
+    const params = { ...filterParams, ...exportSelectionToParams(exportSelection) };
+    return kind === "excel" ? exportExcel(params) : exportNames(params);
+  };
+
+  const exportExcel = async (params = filterParams) => {
     setExportingExcel(true);
     try {
       const res = await apiClient.get("/api/admin/products/export/excel", {
-        params: filterParams,
+        params,
         responseType: "blob",
       });
       downloadBlob(new Blob([res.data]), `mahsoolat-${Date.now()}.xlsx`);
@@ -101,11 +142,11 @@ export default function ProductsPage() {
     }
   };
 
-  const exportNames = async () => {
+  const exportNames = async (params = filterParams) => {
     setExportingNames(true);
     try {
       const res = await apiClient.get("/api/admin/products/export/names", {
-        params: filterParams,
+        params,
         responseType: "blob",
       });
       downloadBlob(new Blob([res.data]), `asami-mahsoolat-${Date.now()}.txt`);
@@ -206,11 +247,11 @@ export default function ProductsPage() {
         subtitle={`${(data?.total ?? 0).toLocaleString("fa-IR")} محصول`}
         actions={
           <div className="flex flex-wrap gap-2">
-            <Button variant="outline" loading={exportingNames} onClick={exportNames}>
+            <Button variant="outline" loading={exportingNames} onClick={() => openExportDialog("names")}>
               <FileText size={16} />
               خروجی متنی محصولات
             </Button>
-            <Button variant="outline" loading={exportingExcel} onClick={exportExcel}>
+            <Button variant="outline" loading={exportingExcel} onClick={() => openExportDialog("excel")}>
               <FileSpreadsheet size={16} />
               خروجی اکسل محصولات
             </Button>
@@ -323,7 +364,61 @@ export default function ProductsPage() {
           <option value="published">منتشر شده</option>
           <option value="draft">پیش‌نویس</option>
         </Select>
+        <Select
+          className="w-40"
+          value={stock}
+          onChange={(e) => {
+            setStock(e.target.value);
+            setPage(1);
+          }}
+        >
+          <option value="">همه موجودی‌ها</option>
+          <option value="inStock">موجود</option>
+          <option value="outOfStock">ناموجود</option>
+        </Select>
       </div>
+
+      <Dialog open={!!exportDialog} onOpenChange={(open) => !open && setExportDialog(null)}>
+        <DialogContent>
+          <DialogTitle>{exportDialog === "excel" ? "خروجی اکسل محصولات" : "خروجی متنی اسامی محصولات"}</DialogTitle>
+          <DialogDescription>
+            انتخاب کنید چه محصولاتی در خروجی باشند. فیلترهای فعال جدول (جستجو، برند، نوع، دسته‌بندی) هم اعمال می‌شوند.
+          </DialogDescription>
+          <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+            {[
+              { group: "status", title: "وضعیت انتشار" },
+              { group: "stock", title: "وضعیت موجودی" },
+            ].map(({ group, title }) => (
+              <div key={group} className="rounded-[var(--radius-md)] border border-[var(--border)] p-3">
+                <p className="mb-2 text-xs font-semibold text-[var(--text-muted)]">{title}</p>
+                <div className="space-y-2">
+                  {EXPORT_OPTIONS.filter((o) => o.group === group).map((o) => (
+                    <label key={o.key} className="flex cursor-pointer items-center gap-2 text-sm text-[var(--text)]">
+                      <input
+                        type="checkbox"
+                        className="h-4 w-4 accent-[var(--brand-600)]"
+                        checked={!!exportSelection[o.key]}
+                        onChange={(e) => setExportSelection((prev) => ({ ...prev, [o.key]: e.target.checked }))}
+                      />
+                      {o.label}
+                    </label>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+          {!exportSelectionValid && (
+            <p className="mt-3 text-xs text-[var(--danger)]">از هر گروه حداقل یک گزینه را انتخاب کنید.</p>
+          )}
+          <div className="mt-5 flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setExportDialog(null)}>انصراف</Button>
+            <Button disabled={!exportSelectionValid} onClick={runExport}>
+              {exportDialog === "excel" ? <FileSpreadsheet size={16} /> : <FileText size={16} />}
+              دریافت خروجی
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <DataTable
         columns={columns}

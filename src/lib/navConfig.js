@@ -124,6 +124,8 @@ const navConfig = [
       { href: "/settings/product-page", label: "ارسال رایگان و بنرهای صفحه محصول" },
       { href: "/settings/footer", label: "تنظیمات فوتر" },
       { href: "/settings/whatsapp-widget", label: "ویجت واتس‌اپ" },
+      { href: "/settings/product-card", label: "نمایش کارت محصول" },
+      { href: "/settings/images", label: "بهینه‌سازی تصاویر" },
       { href: "/settings/taxonomy-seo", label: "تنظیمات سئوی دسته/برند/برچسب" },
     ],
   },
