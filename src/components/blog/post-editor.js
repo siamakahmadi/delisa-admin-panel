@@ -17,6 +17,7 @@ import { CategorySelect } from "@/components/blog/category-select";
 import { TagSelect } from "@/components/blog/tag-select";
 import { RevisionsPanel } from "@/components/blog/revisions-panel";
 import { fetchPost, createPost, updatePost, checkSlug, uploadBlogImage } from "@/lib/blog/api";
+import { LiveSeoAnalysis } from "@/components/seo/live-seo-analysis";
 
 const AUTOSAVE_DELAY = 2500;
 
@@ -43,6 +44,7 @@ export function PostEditor({ mode, postId: initialPostId }) {
 
   const [excerpt, setExcerpt] = useState("");
   const [coverUrl, setCoverUrl] = useState("");
+  const [coverAlt, setCoverAlt] = useState("");
   const [coverUploading, setCoverUploading] = useState(false);
   const [tags, setTags] = useState([]);
   const [category, setCategory] = useState(null);
@@ -62,6 +64,10 @@ export function PostEditor({ mode, postId: initialPostId }) {
   const [showSeo, setShowSeo] = useState(false);
 
   const [initialContent, setInitialContent] = useState(null);
+  // نسخه‌ی کم‌تکرار (هر ۱٫۵ ثانیه) از HTML محتوا برای تحلیل زنده‌ی سئو — تا
+  // هر کلید تایپ‌شده کل ادیتور را دوباره رندر نکند
+  const [seoContentHtml, setSeoContentHtml] = useState("");
+  const seoContentTimerRef = useRef(null);
   const contentSnapshotRef = useRef({ json: null, html: "", text: "", wordCount: 0, readingTimeMinutes: 0 });
   const editorRef = useRef(null);
 
@@ -76,6 +82,7 @@ export function PostEditor({ mode, postId: initialPostId }) {
     setSlug(post.slug || "");
     setExcerpt(post.excerpt || "");
     setCoverUrl(post.coverUrl || "");
+    setCoverAlt(post.coverAlt || "");
     setFeatured(!!post.featured);
     setStatus(post.status || "draft");
     setPublishedAt(post.publishedAt || null);
@@ -93,6 +100,7 @@ export function PostEditor({ mode, postId: initialPostId }) {
     if (includeContent) {
       setInitialContent(post.content || null);
       contentSnapshotRef.current = { json: post.content || null, html: post.contentHtml || "", text: "", wordCount: post.wordCount || 0, readingTimeMinutes: post.readingTimeMinutes || 1 };
+      setSeoContentHtml(post.contentHtml || "");
     }
   }, []);
 
@@ -149,6 +157,7 @@ export function PostEditor({ mode, postId: initialPostId }) {
         slug: slug || slugify(title),
         excerpt,
         coverUrl,
+        coverAlt,
         featured,
         tags: (tags || []).map((t) => t.value),
         categories: category ? [category] : [],
@@ -179,7 +188,7 @@ export function PostEditor({ mode, postId: initialPostId }) {
 
       return payload;
     },
-    [title, slug, excerpt, coverUrl, featured, tags, category, seoTitle, seoDescription, seoKeywords, canonicalUrl, robots, ogImage]
+    [title, slug, excerpt, coverUrl, coverAlt, featured, tags, category, seoTitle, seoDescription, seoKeywords, canonicalUrl, robots, ogImage]
   );
 
   const doSave = useCallback(
@@ -204,7 +213,13 @@ export function PostEditor({ mode, postId: initialPostId }) {
         } else {
           post = await updatePost(postId, payload);
         }
-        if (post) hydrateFromPost(post, { includeContent: false });
+        // اتوسیو نباید فیلدهای قابل‌ویرایش (تگ، تصویر، خلاصه، ...) را از
+        // پاسخ سرور دوباره ست کند — چون ممکن است کاربر در همین فاصله (چه
+        // قبل از ارسال درخواست، چه حین رفت‌وبرگشت شبکه) دوباره ویرایششان
+        // کرده باشد؛ این کار همان چیزی بود که باعث می‌شد تگ/تصویر تازه‌اضافه‌شده
+        // با اتوسیو دوباره ناپدید شود. فقط ذخیره‌ی دستی (انتشار/بایگانی/...)
+        // که وضعیت را واقعاً از سرور تغییر می‌دهد نیاز به هیدریت دارد.
+        if (post && !auto) hydrateFromPost(post, { includeContent: false });
         setSaveState("saved");
         if (!auto) {
           toast.success(statusOpts.publishNow || statusOpts.scheduleAt ? "پست منتشر شد" : statusOpts.asArchived ? "پست بایگانی شد" : "ذخیره شد");
@@ -221,14 +236,34 @@ export function PostEditor({ mode, postId: initialPostId }) {
     [title, postId, buildPayload, hydrateFromPost, router, toast]
   );
 
+  // doSave (و buildPayload زیرش) هر بار که یک فیلد عوض می‌شود از نو ساخته
+  // می‌شود؛ اما markDirty معمولاً بلافاصله بعد از یک setState فراخوانی
+  // می‌شود (مثلاً setTags(v); markDirty();) — یعنی همان لحظه هنوز رندر
+  // جدید اتفاق نیفتاده و markDirty نسخه‌ی «قدیمی» doSave را می‌بندد که
+  // فیلد تازه‌تغییریافته را نمی‌بیند. اگر کاربر کار دیگری هم نکند، همان
+  // تایمر قدیمی 2.5 ثانیه بعد با دیتای قدیمی (بدون آخرین تغییر) ذخیره
+  // می‌کند. برای رفع این مشکل، همیشه از طریق یک ref که هر رندر آپدیت
+  // می‌شود صدا می‌زنیم تا وقتی تایمر شلیک شد، همیشه آخرین doSave را ببیند.
+  const doSaveRef = useRef(doSave);
+  useEffect(() => {
+    doSaveRef.current = doSave;
+  }, [doSave]);
+
   const autosaveTimerRef = useRef(null);
   useEffect(() => () => clearTimeout(autosaveTimerRef.current), []);
 
+  // اتوسیو فقط محتوا رو ذخیره می‌کنه، نه وضعیت انتشار — قبلاً هر اتوسیو
+  // همیشه asDraft:true می‌فرستاد (مگر status==="archived")، یعنی چند ثانیه
+  // بعد از زدن «انتشار»، اولین ویرایش کوچیک (حتی تایپوی یه کلمه) با اتوسیو
+  // خودش status رو خاموش به "draft" برمی‌گردوند و publishedAt رو هم پاک
+  // می‌کرد — دقیقاً همون چیزی که باعث می‌شد پست منتشرشده سمت مشتری غیب بشه.
+  // با نفرستادن status توی payload اتوسیو، بک‌اند (UPDATABLE_FIELDS) اصلاً
+  // بهش دست نمی‌زنه.
   const markDirty = useCallback(() => {
     setSaveState("dirty");
     clearTimeout(autosaveTimerRef.current);
-    autosaveTimerRef.current = setTimeout(() => doSave({ auto: true, asDraft: status !== "archived" }), AUTOSAVE_DELAY);
-  }, [doSave, status]);
+    autosaveTimerRef.current = setTimeout(() => doSaveRef.current({ auto: true }), AUTOSAVE_DELAY);
+  }, []);
 
   const onTitleChange = (v) => {
     setTitle(v);
@@ -246,6 +281,12 @@ export function PostEditor({ mode, postId: initialPostId }) {
     (snapshot) => {
       contentSnapshotRef.current = snapshot;
       markDirty();
+      if (!seoContentTimerRef.current) {
+        seoContentTimerRef.current = setTimeout(() => {
+          seoContentTimerRef.current = null;
+          setSeoContentHtml(contentSnapshotRef.current?.html || "");
+        }, 1500);
+      }
     },
     [markDirty]
   );
@@ -364,7 +405,7 @@ export function PostEditor({ mode, postId: initialPostId }) {
           </div>
 
           <textarea
-            className="mb-4 w-full resize-none rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface)] px-3 py-2.5 text-sm text-[var(--text)] outline-none placeholder:text-[var(--text-faint)] focus:border-[var(--brand-500)] focus:ring-2 focus:ring-[var(--brand-100)]"
+            className="mb-4 w-full max-w-full resize-none break-words rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface)] px-3 py-2.5 text-sm text-[var(--text)] outline-none placeholder:text-[var(--text-faint)] focus:border-[var(--brand-500)] focus:ring-2 focus:ring-[var(--brand-100)]"
             placeholder="خلاصه کوتاه (برای کارت‌ها و سئو استفاده می‌شود)…"
             rows={2}
             value={excerpt}
@@ -432,7 +473,15 @@ export function PostEditor({ mode, postId: initialPostId }) {
           <Card>
             <CardContent className="space-y-2 p-4">
               <h3 className="text-sm font-semibold text-[var(--text)]">تصویر کاور</h3>
-              <CoverImagePicker uploading={coverUploading} value={coverUrl} onChange={setCoverUrl} onUpload={uploadCover} />
+              <CoverImagePicker uploading={coverUploading} value={coverUrl} onChange={(v) => { setCoverUrl(v); markDirty(); }} onUpload={uploadCover} />
+              <div>
+                <Label>متن جایگزین تصویر (Alt)</Label>
+                <Input
+                  value={coverAlt}
+                  onChange={(e) => { setCoverAlt(e.target.value); markDirty(); }}
+                  placeholder="برای سئو و دسترس‌پذیری — توضیح کوتاه تصویر"
+                />
+              </div>
             </CardContent>
           </Card>
 
@@ -480,6 +529,40 @@ export function PostEditor({ mode, postId: initialPostId }) {
                   </div>
                 </div>
               )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-4">
+              <LiveSeoAnalysis
+                entityType="post"
+                entityId={postId}
+                onApplySuggestion={(sg) => {
+                  if (sg.seoTitle) setSeoTitle(sg.seoTitle);
+                  if (sg.metaDescription) setSeoDescription(sg.metaDescription);
+                  if (sg.keywords?.length) setSeoKeywords(sg.keywords.join(", "));
+                  else if (sg.focusKeyword) setSeoKeywords(sg.focusKeyword);
+                  if (sg.excerpt && !excerpt) setExcerpt(sg.excerpt);
+                  markDirty();
+                }}
+                payload={{
+                  entityType: "post",
+                  entityId: postId || null,
+                  title,
+                  seoTitle,
+                  metaDescription: seoDescription,
+                  slug,
+                  path: `/blog/${encodeURIComponent(slug || "")}`,
+                  keywords: seoKeywords.split(",").map((k) => k.trim()).filter(Boolean),
+                  contentHtml: seoContentHtml,
+                  excerpt,
+                  coverImage: coverUrl ? { url: coverUrl, alt: coverAlt } : null,
+                  robots,
+                  canonical: canonicalUrl,
+                  published: status === "published",
+                  post: { categories: category ? 1 : 0, tags: tags.length, ogImage },
+                }}
+              />
             </CardContent>
           </Card>
         </aside>

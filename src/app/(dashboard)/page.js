@@ -17,6 +17,7 @@ import { PageHeader } from "@/components/layout/page-header";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { formatNumber, formatToman } from "@/lib/utils";
+import { SeoDashboardWidget } from "@/components/seo/seo-dashboard-widget";
 
 export default function DashboardPage() {
   const { data, isLoading } = useQuery({
@@ -63,6 +64,10 @@ export default function DashboardPage() {
           color="amber"
           isLoading={isLoading}
         />
+      </div>
+
+      <div className="mt-6">
+        <SeoDashboardWidget />
       </div>
 
       <Card className="mt-6">

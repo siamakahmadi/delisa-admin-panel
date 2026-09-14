@@ -65,6 +65,16 @@ export default function LabelsPage() {
         header: "ترتیب",
         render: (row) => (row.sortOrder ?? 0).toLocaleString("fa-IR"),
       },
+      {
+        key: "isActive",
+        header: "صفحه در سایت",
+        render: (row) =>
+          row.isActive === false ? (
+            <span className="rounded-full bg-[var(--danger-bg)] px-2 py-0.5 text-[11px] font-medium text-[var(--danger)]">غیرفعال</span>
+          ) : (
+            <span className="rounded-full bg-[var(--success-bg)] px-2 py-0.5 text-[11px] font-medium text-[var(--success)]">فعال</span>
+          ),
+      },
     ],
     []
   );

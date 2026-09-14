@@ -74,7 +74,7 @@ export default function BlogListPage() {
                 <img src={row.coverUrl} alt="" className="h-full w-full object-cover" />
               )}
             </div>
-            <div className="min-w-0">
+            <div className="min-w-0 max-w-[320px]">
               <p className="truncate text-sm font-medium text-[var(--text)]">{row.title || "(بدون عنوان)"}</p>
               <p className="truncate text-xs text-[var(--text-faint)]">{row.excerpt}</p>
             </div>

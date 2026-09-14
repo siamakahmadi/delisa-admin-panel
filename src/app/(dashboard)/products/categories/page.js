@@ -1,7 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowRight, Trash2, Save } from "lucide-react";
 import apiClient from "@/lib/apiClient";
@@ -16,7 +16,16 @@ import { CategoryTreePanel } from "@/components/products/category-tree-panel";
 import { SeoContentFields } from "@/components/products/seo-content-fields";
 
 export default function CategoriesPage() {
+  return (
+    <Suspense fallback={null}>
+      <CategoriesPageInner />
+    </Suspense>
+  );
+}
+
+function CategoriesPageInner() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const toast = useToast();
   const queryClient = useQueryClient();
 
@@ -32,6 +41,16 @@ export default function CategoriesPage() {
 
   const categories = useMemo(() => data ?? [], [data]);
   const selected = useMemo(() => categories.find((c) => c._id === selectedId) || null, [categories, selectedId]);
+
+  // لینک مستقیم از مرکز سئو: /products/categories?edit=<id> — الگوی
+  // «تنظیم state هنگام تغییر prop» (بدون effect)
+  const editParam = searchParams.get("edit");
+  const [handledEdit, setHandledEdit] = useState(null);
+  if (editParam && editParam !== handledEdit && categories.some((c) => c._id === editParam)) {
+    setHandledEdit(editParam);
+    setSelectedId(editParam);
+    setMode("edit");
+  }
 
   const saveMutation = useMutation({
     mutationFn: ({ id, payload }) =>

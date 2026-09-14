@@ -49,6 +49,7 @@ function LabelEditor({ tag, id }) {
     seoTitle: tag.seoTitle || "",
     seoDescription: tag.seoDescription || "",
     seoContent: { h1: "", shortDescription: "", faqs: [], ...(tag.seoContent || {}) },
+    isActive: tag.isActive !== false,
   });
   const [productIds, setProductIds] = useState((tag.products ?? []).map((p) => p._id));
   const [assignedProducts, setAssignedProducts] = useState(tag.products ?? []);
@@ -78,6 +79,7 @@ function LabelEditor({ tag, id }) {
         seoTitle: form.seoTitle,
         seoDescription: form.seoDescription,
         seoContent: form.seoContent,
+        isActive: form.isActive,
       }),
     onSuccess: () => {
       toast.success("اطلاعات ذخیره شد");
@@ -279,6 +281,15 @@ function LabelEditor({ tag, id }) {
             <CardTitle>تنظیمات سئو</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
+            <label className="flex cursor-pointer items-center justify-between rounded-[var(--radius-md)] bg-[var(--surface-muted)] p-3">
+              <span>
+                <span className="block text-sm font-medium text-[var(--text)]">صفحه‌ی برچسب در سایت فعال باشد</span>
+                <span className="mt-0.5 block text-xs text-[var(--text-faint)]">
+                  غیرفعال → آدرس /tag/{tag.slug} کد 404 می‌دهد و از سایت‌مپ و فیلترها حذف می‌شود (برچسب روی محصولات می‌ماند)
+                </span>
+              </span>
+              <input type="checkbox" checked={form.isActive} onChange={(e) => setForm((f) => ({ ...f, isActive: e.target.checked }))} className="h-4 w-4 accent-[var(--brand-600)]" />
+            </label>
             <div>
               <Label>عنوان سئو</Label>
               <Input value={form.seoTitle} onChange={(e) => setForm((f) => ({ ...f, seoTitle: e.target.value }))} />

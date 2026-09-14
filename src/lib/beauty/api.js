@@ -16,6 +16,7 @@ function createEntityApi(basePath) {
 export const skinTypesApi = createEntityApi("/api/admin/beauty/skin-types");
 export const skinConcernsApi = createEntityApi("/api/admin/beauty/skin-concerns");
 export const ingredientsApi = createEntityApi("/api/admin/beauty/ingredients");
+export const routinesApi = createEntityApi("/api/admin/beauty/routines");
 
 export function uploadBeautyImage(file) {
   const fd = new FormData();

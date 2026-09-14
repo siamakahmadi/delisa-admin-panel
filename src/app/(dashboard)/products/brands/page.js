@@ -1,7 +1,12 @@
 "use client";
 
+import { Suspense } from "react";
 import { TaxonomyManager } from "@/components/products/taxonomy-manager";
 
 export default function BrandsPage() {
-  return <TaxonomyManager title="برندها" endpoint="/api/brands" queryKey="brands" imageField="logo" />;
+  return (
+    <Suspense fallback={null}>
+      <TaxonomyManager title="برندها" endpoint="/api/brands" queryKey="brands" imageField="logo" />
+    </Suspense>
+  );
 }

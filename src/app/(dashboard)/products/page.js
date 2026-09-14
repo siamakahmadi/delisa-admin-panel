@@ -160,16 +160,24 @@ export default function ProductsPage() {
       {
         key: "isPublished",
         header: "وضعیت",
-        render: (row) =>
-          row.isPublished ? (
-            <Badge variant="success" size="sm" dot>
-              منتشر شده
-            </Badge>
-          ) : (
-            <Badge variant="neutral" size="sm" dot>
-              پیش‌نویس
-            </Badge>
-          ),
+        render: (row) => (
+          <div className="flex flex-wrap items-center gap-1">
+            {row.isPublished ? (
+              <Badge variant="success" size="sm" dot>
+                منتشر شده
+              </Badge>
+            ) : (
+              <Badge variant="neutral" size="sm" dot>
+                پیش‌نویس
+              </Badge>
+            )}
+            {row.isManuallyOutOfStock && (
+              <Badge variant="danger" size="sm" dot>
+                ناموجود
+              </Badge>
+            )}
+          </div>
+        ),
       },
       {
         key: "actions",

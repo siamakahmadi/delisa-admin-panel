@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { ImagePlus, X, Save, FileText, Plus } from "lucide-react";
 import apiClient from "@/lib/apiClient";
 import { slugify } from "@/lib/utils";
+import { LiveSeoAnalysis } from "@/components/seo/live-seo-analysis";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Input, Label } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -433,7 +434,45 @@ export function ProductForm({ product }) {
             <div>
               <Label>کلمات کلیدی</Label>
               <TagInput value={seoKeywords} onChange={setSeoKeywords} placeholder="کلمه را تایپ و اینتر بزنید" />
+              <p className="mt-1 text-[11px] text-[var(--text-faint)]">اولین کلمه، «کلمه‌ی کلیدی کانونی» تحلیل سئو است.</p>
             </div>
+            <LiveSeoAnalysis
+              entityType="product"
+              entityId={product?._id}
+              aiContext={{
+                brand: brands?.find?.((b) => (b._id || b.id) === brand)?.name || "",
+                category: categories?.find?.((c) => c._id === selectedCategories[0])?.name || "",
+                price: finalPrice,
+              }}
+              onApplySuggestion={(sg) => {
+                if (sg.seoTitle) setSeoTitle(sg.seoTitle);
+                if (sg.metaDescription) setSeoDescription(sg.metaDescription);
+                if (sg.keywords?.length) setSeoKeywords(sg.keywords);
+                else if (sg.focusKeyword) setSeoKeywords([sg.focusKeyword]);
+              }}
+              payload={{
+                entityType: "product",
+                entityId: product?._id || null,
+                title: productName,
+                seoTitle,
+                metaDescription: seoDescription,
+                slug: seoSlug || slug,
+                path: `/product/${encodeURIComponent(seoSlug || slug || "")}`,
+                keywords: seoKeywords,
+                contentHtml: description,
+                images: [...existingImages.map((i) => ({ url: i.url, alt: i.alt || "" })), ...newImages.map((i) => ({ url: i.file?.name || "new", alt: i.alt || "" }))],
+                published: isPublished,
+                product: {
+                  categories: selectedCategories.length,
+                  brand: !!brand,
+                  price: Number(finalPrice) || 0,
+                  inStock: true,
+                  nameEn: productNameEn,
+                  features: features.filter((f) => f.title).length + attributes.filter((a) => a.name).length,
+                  faqs: faqs.filter((f) => f.question).length,
+                },
+              }}
+            />
           </Section>
         </div>
 

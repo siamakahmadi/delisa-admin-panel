@@ -22,6 +22,8 @@ import { fetchMenus, fetchMenu, createMenu, updateMenu, duplicateMenu, publishMe
 const LOCATION_OPTIONS = [
   { value: "header", label: "هدر (منوی اصلی)" },
   { value: "footer", label: "فوتر" },
+  { value: "blog-header", label: "هدر بلاگ" },
+  { value: "blog-footer", label: "فوتر بلاگ" },
   { value: "mobile", label: "منوی موبایل" },
   { value: "account", label: "پنل کاربری" },
   { value: "custom", label: "سفارشی / بدون جایگاه ثابت" },
@@ -382,7 +384,7 @@ export default function MenuBuilderPage() {
 
   return (
     <div>
-      <PageHeader title="منوساز" subtitle="مدیریت منوهای هدر، فوتر، موبایل و پنل کاربری" />
+      <PageHeader title="منوساز" subtitle="مدیریت منوهای هدر، فوتر، هدر/فوتر بلاگ، موبایل و پنل کاربری" />
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[260px_1fr_380px]">
         <aside className="space-y-3">

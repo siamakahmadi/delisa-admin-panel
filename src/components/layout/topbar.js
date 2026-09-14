@@ -5,6 +5,7 @@ import { Menu, Moon, Sun, LogOut, User, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import useUiStore from "@/stores/uiStore";
 import { clearSession, getUser } from "@/lib/auth";
+import { SeoHealthIndicator } from "@/components/seo/seo-health-indicator";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -33,6 +34,8 @@ export function Topbar({ onOpenMobile }) {
       </button>
 
       <div className="flex-1" />
+
+      <SeoHealthIndicator />
 
       <button
         onClick={toggleTheme}

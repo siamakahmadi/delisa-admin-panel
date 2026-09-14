@@ -16,6 +16,9 @@ import {
   Film,
   Gem,
   Plug,
+  Bot,
+  ListChecks,
+  Gauge,
 } from "lucide-react";
 
 /* Full information architecture. Every module is reachable from the sidebar;
@@ -115,6 +118,7 @@ const navConfig = [
       { href: "/content/page-builder", label: "صفحه‌ساز" },
       { href: "/content/homepage", label: "چیدمان صفحه اصلی" },
       { href: "/content/faq", label: "سوالات متداول" },
+      { href: "/content/info-pages", label: "صفحات اطلاعات (درباره ما، حریم خصوصی…)" },
       { href: "/settings/top-banner", label: "بنر بالای هدر" },
       { href: "/settings/header-quick-tabs", label: "تب‌های دسترسی سریع هدر" },
       { href: "/settings/product-page", label: "ارسال رایگان و بنرهای صفحه محصول" },
@@ -123,9 +127,11 @@ const navConfig = [
       { href: "/settings/taxonomy-seo", label: "تنظیمات سئوی دسته/برند/برچسب" },
     ],
   },
+  { type: "link", id: "seo", href: "/seo", label: "مرکز سئو", icon: Gauge },
   { type: "link", id: "feed", href: "/feed", label: "فید", icon: Film },
   { type: "link", id: "loyalty", href: "/loyalty", label: "باشگاه مشتریان", icon: Gem },
   { type: "link", id: "mcp-integration", href: "/integrations/mcp", label: "اتصال Claude (MCP)", icon: Plug },
+  { type: "link", id: "crawler", href: "/integrations/crawler", label: "کراولر محصولات", icon: Bot },
   {
     type: "group",
     id: "beauty-profile",
@@ -147,6 +153,18 @@ const navConfig = [
       { href: "/beauty/skin-types", label: "انواع پوست" },
       { href: "/beauty/skin-concerns", label: "دغدغه‌های پوستی" },
       { href: "/beauty/ingredients", label: "ترکیبات" },
+      { href: "/beauty/routines", label: "قالب‌های روتین" },
+      { href: "/beauty/content-guide", label: "راهنمای تولید محتوا" },
+    ],
+  },
+  {
+    type: "group",
+    id: "routine-builder",
+    label: "روتین‌ساز",
+    icon: ListChecks,
+    items: [
+      { href: "/routine-builder/settings", label: "فعال‌سازی و تنظیمات", exact: true },
+      { href: "/beauty/routines", label: "قالب‌های روتین" },
     ],
   },
   {

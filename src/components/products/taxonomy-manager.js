@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowRight, Plus, Pencil, Trash2, Save, ImageOff } from "lucide-react";
 import apiClient from "@/lib/apiClient";
@@ -37,6 +37,19 @@ export function TaxonomyManager({ title, endpoint, queryKey, imageField }) {
 
   const items = useMemo(() => data ?? [], [data]);
   const active = editing || creating;
+
+  // لینک مستقیم از مرکز سئو: ?edit=<id>
+  const searchParams = useSearchParams();
+  const editParam = searchParams.get("edit");
+  const [handledEdit, setHandledEdit] = useState(null);
+  if (editParam && editParam !== handledEdit) {
+    const row = items.find((i) => i._id === editParam);
+    if (row) {
+      setHandledEdit(editParam);
+      setCreating(false);
+      setEditing(row);
+    }
+  }
 
   const saveMutation = useMutation({
     mutationFn: (payload) =>
