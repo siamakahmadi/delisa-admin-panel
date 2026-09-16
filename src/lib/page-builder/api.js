@@ -4,9 +4,14 @@ import apiClient from "@/lib/apiClient";
 export const fetchComponentTypes = () => apiClient.get("/api/cms/component-types").then((r) => r.data?.types || []);
 
 /* ---------------- assets / pickers ---------------- */
-export function uploadAsset(file) {
+export function uploadAsset(file, context) {
   const fd = new FormData();
   fd.append("file", file);
+  // "banner"/"slider": tells the backend's sharp optimizer to use the
+  // high-quality (100) preset instead of the generic-asset default (82) —
+  // full-bleed hero/banner images show every compression artefact at that
+  // size, unlike thumbnails and icons uploaded through this same endpoint.
+  if (context) fd.append("context", context);
   return apiClient.post("/api/cms/assets", fd).then((r) => r.data);
 }
 

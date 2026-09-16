@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowRight, Smartphone, Tablet, Monitor, Clock, LogIn } from "lucide-react";
+import { ArrowRight, Smartphone, Tablet, Monitor, Clock, LogIn, User } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -47,6 +47,19 @@ export function SessionDetail({ sessionId }) {
           <Card>
             <CardContent className="space-y-3 p-4">
               <h3 className="text-sm font-semibold text-[var(--text)]">اطلاعات جلسه</h3>
+              <div className="flex items-center gap-2 text-sm text-[var(--text-muted)]">
+                <User size={15} />
+                {session.customer ? (
+                  <button
+                    onClick={() => router.push(`/customers/${session.customer.id}`)}
+                    className="font-medium text-[var(--brand-600)] hover:underline"
+                  >
+                    {session.customer.name || session.customer.phone || "مشتری"}
+                  </button>
+                ) : (
+                  "بازدیدکننده مهمان"
+                )}
+              </div>
               <div className="flex items-center gap-2 text-sm text-[var(--text-muted)]">
                 <DeviceIcon size={15} />
                 {DEVICE_LABELS[session.device] || session.device}

@@ -14,6 +14,7 @@ import {
   PackageX,
   AlertTriangle,
   FileClock,
+  LineChart,
 } from "lucide-react";
 import apiClient from "@/lib/apiClient";
 import { PageHeader } from "@/components/layout/page-header";
@@ -247,6 +248,10 @@ export default function ProductsPage() {
         subtitle={`${(data?.total ?? 0).toLocaleString("fa-IR")} محصول`}
         actions={
           <div className="flex flex-wrap gap-2">
+            <Button variant="outline" onClick={() => router.push("/products/analytics")}>
+              <LineChart size={16} />
+              آمار محصولات
+            </Button>
             <Button variant="outline" loading={exportingNames} onClick={() => openExportDialog("names")}>
               <FileText size={16} />
               خروجی متنی محصولات

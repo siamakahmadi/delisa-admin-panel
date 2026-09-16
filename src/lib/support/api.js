@@ -51,3 +51,10 @@ export const sendAdminAnnouncement = (payload) =>
 
 export const fetchSupportStaff = () =>
   apiClient.get("/api/auth/staff-list").then((r) => (r.data?.users || []).filter((u) => u.role === "support" && u.isActive !== false));
+
+// ---- live chat settings (on/off + schedule for the customer-site widget) ----
+export const fetchChatSettings = () =>
+  apiClient.get("/api/admin/support/chat-settings").then((r) => r.data?.settings);
+
+export const updateChatSettings = (payload) =>
+  apiClient.put("/api/admin/support/chat-settings", payload).then((r) => r.data?.settings);

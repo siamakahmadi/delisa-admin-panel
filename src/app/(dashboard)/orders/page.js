@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Search, Archive, Eye, CalendarRange, X, ShoppingBag, Clock, CalendarDays, Wallet } from "lucide-react";
+import { Search, Archive, Eye, CalendarRange, X, ShoppingBag, Clock, CalendarDays, Wallet, LineChart } from "lucide-react";
 import apiClient from "@/lib/apiClient";
 import { PageHeader } from "@/components/layout/page-header";
 import { DataTable } from "@/components/ui/data-table";
@@ -147,10 +147,16 @@ export default function OrdersPage() {
         title="سفارشات"
         subtitle={`${formatNumber(total)} سفارش`}
         actions={
-          <Button variant="outline" onClick={() => router.push("/orders/abandoned")}>
-            <Archive size={16} />
-            سفارشات رها‌شده
-          </Button>
+          <div className="flex gap-2">
+            <Button onClick={() => router.push("/orders/analytics")}>
+              <LineChart size={16} />
+              آنالیتیکس فروش
+            </Button>
+            <Button variant="outline" onClick={() => router.push("/orders/abandoned")}>
+              <Archive size={16} />
+              سفارشات رها‌شده
+            </Button>
+          </div>
         }
       />
 

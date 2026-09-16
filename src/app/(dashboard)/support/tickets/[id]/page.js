@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useMemo, useState } from "react";
+import { use, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowRight, Send, Check, X, ArrowLeftRight, Archive, Trash2, User } from "lucide-react";
@@ -26,6 +26,7 @@ import {
   deleteTicket,
   fetchSupportStaff,
 } from "@/lib/support/api";
+import { getLiveChatSocket } from "@/lib/support/liveChatSocket";
 import {
   TICKET_STATUS_LABELS,
   TICKET_STATUS_VARIANTS,
@@ -80,6 +81,34 @@ export default function TicketDetailPage({ params }) {
     queryKey: ["support-staff"],
     queryFn: fetchSupportStaff,
   });
+
+  // Real-time: join this ticket's room and push incoming messages straight
+  // into the query cache — no polling, no manual refresh needed.
+  useEffect(() => {
+    const socket = getLiveChatSocket();
+    if (!socket || !ticketId) return;
+
+    socket.emit("chat:join", ticketId);
+
+    const onMessage = (message) => {
+      queryClient.setQueryData(["admin-ticket-messages", ticketId], (prev = []) => {
+        if (prev.some((m) => m._id === message._id)) return prev;
+        return [...prev, message];
+      });
+    };
+    const onTicketUpdate = () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-ticket", ticketId] });
+    };
+
+    socket.on("chat:message", onMessage);
+    socket.on("chat:ticket_update", onTicketUpdate);
+
+    return () => {
+      socket.emit("chat:leave", ticketId);
+      socket.off("chat:message", onMessage);
+      socket.off("chat:ticket_update", onTicketUpdate);
+    };
+  }, [ticketId, queryClient]);
 
   const invalidateTicket = () => {
     queryClient.invalidateQueries({ queryKey: ["admin-ticket", ticketId] });

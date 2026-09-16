@@ -30,6 +30,20 @@ export const TICKET_TYPE_LABELS = {
   staff: "داخلی",
 };
 
+export const LIVE_CHAT_TOPIC = "چت زنده";
+
+export const CHAT_DAY_LABELS = {
+  sat: "شنبه",
+  sun: "یکشنبه",
+  mon: "دوشنبه",
+  tue: "سه‌شنبه",
+  wed: "چهارشنبه",
+  thu: "پنجشنبه",
+  fri: "جمعه",
+};
+
+export const CHAT_DAY_ORDER = ["sat", "sun", "mon", "tue", "wed", "thu", "fri"];
+
 export const COMMENT_STATUS_LABELS = {
   pending: "در انتظار تایید",
   approved: "تایید شده",

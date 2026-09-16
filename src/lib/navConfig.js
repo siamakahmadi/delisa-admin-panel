@@ -19,6 +19,7 @@ import {
   Bot,
   ListChecks,
   Gauge,
+  ServerCog,
 } from "lucide-react";
 
 /* Full information architecture. Every module is reachable from the sidebar;
@@ -32,6 +33,7 @@ const navConfig = [
     icon: ShoppingCart,
     items: [
       { href: "/orders", label: "لیست سفارشات", exact: true },
+      { href: "/orders/analytics", label: "آنالیتیکس فروش" },
       { href: "/orders/abandoned", label: "سفارشات رها‌شده" },
     ],
   },
@@ -42,6 +44,7 @@ const navConfig = [
     icon: Package,
     items: [
       { href: "/products", label: "همه محصولات", exact: true },
+      { href: "/products/analytics", label: "آمار محصولات" },
       { href: "/products/new", label: "افزودن محصول" },
       { href: "/products/categories", label: "دسته‌بندی‌ها" },
       { href: "/products/brands", label: "برندها" },
@@ -131,6 +134,7 @@ const navConfig = [
     ],
   },
   { type: "link", id: "seo", href: "/seo", label: "مرکز سئو", icon: Gauge },
+  { type: "link", id: "system-health", href: "/system-health", label: "وضعیت سیستم", icon: ServerCog },
   { type: "link", id: "feed", href: "/feed", label: "فید", icon: Film },
   { type: "link", id: "loyalty", href: "/loyalty", label: "باشگاه مشتریان", icon: Gem },
   { type: "link", id: "mcp-integration", href: "/integrations/mcp", label: "اتصال Claude (MCP)", icon: Plug },
@@ -187,8 +191,10 @@ const navConfig = [
     label: "پشتیبانی",
     icon: Headset,
     items: [
+      { href: "/support/live-chat", label: "چت‌های زنده", exact: true },
       { href: "/support/tickets", label: "تیکت‌ها", exact: true },
       { href: "/support/comments", label: "نظرات محصولات" },
+      { href: "/support/chat-settings", label: "تنظیمات چت زنده (روشن/خاموش و زمان‌بندی)" },
     ],
   },
   { type: "link", id: "staff", href: "/staff", label: "کارکنان", icon: UserCog },

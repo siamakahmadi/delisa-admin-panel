@@ -27,8 +27,7 @@ import { StatusQuickSelect } from "@/components/orders/status-quick-select";
 import { useToast } from "@/components/ui/toast";
 import { formatDateTime, formatToman } from "@/lib/utils";
 import { ORDER_STATUS_LABELS, ORDER_STATUS_VARIANT } from "@/lib/constants";
-
-const CUSTOMER_SITE_URL = process.env.NEXT_PUBLIC_CUSTOMER_SITE_URL;
+import { productSiteUrl } from "@/lib/siteLinks";
 
 const PAYMENT_METHOD_LABELS = {
   zarinpal: "زرین‌پال",
@@ -160,15 +159,24 @@ export function OrderDetail({ id }) {
                       <tr key={i} className="border-b border-[var(--border)] last:border-0">
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-2">
+                            {item.thumbnail ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img
+                                src={item.thumbnail}
+                                alt=""
+                                className="h-8 w-8 shrink-0 rounded-[var(--radius-sm)] bg-[var(--surface-muted)] object-cover"
+                              />
+                            ) : null}
                             <span className="max-w-[180px] truncate font-medium text-[var(--text)]">
                               {item.title || "محصول"}
                             </span>
-                            {item.productId && CUSTOMER_SITE_URL && (
+                            {(item.productSlug || item.productId) && (
                               <a
-                                href={`${CUSTOMER_SITE_URL}/product/${item.productId}`}
+                                href={productSiteUrl(item.productSlug || item.productId)}
                                 target="_blank"
                                 rel="noreferrer"
                                 className="shrink-0 text-[var(--text-faint)] hover:text-[var(--brand-600)]"
+                                title="مشاهده در سایت"
                               >
                                 <ExternalLink size={13} />
                               </a>
@@ -295,7 +303,16 @@ export function OrderDetail({ id }) {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-1 text-sm">
-              <p className="font-medium text-[var(--text)]">{order.customer?.name || "بدون نام"}</p>
+              {order.customer?._id ? (
+                <button
+                  onClick={() => router.push(`/customers/${order.customer._id}`)}
+                  className="font-medium text-[var(--brand-600)] hover:underline"
+                >
+                  {order.customer?.name || "بدون نام"}
+                </button>
+              ) : (
+                <p className="font-medium text-[var(--text)]">{order.customer?.name || "بدون نام"}</p>
+              )}
               <p dir="ltr" className="text-[var(--text-muted)]">
                 {order.customer?.phone}
               </p>

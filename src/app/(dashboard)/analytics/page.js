@@ -129,7 +129,7 @@ export default function AnalyticsOverviewPage() {
       </Card>
 
       <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <Card className="lg:col-span-2">
+        <Card className="min-w-0 lg:col-span-2">
           <CardHeader>
             <CardTitle>پرترافیک‌ترین صفحات</CardTitle>
           </CardHeader>
@@ -207,7 +207,7 @@ export default function AnalyticsOverviewPage() {
             <ul className="divide-y divide-[var(--border)]">
               {topReferrers.map((r) => (
                 <li key={r.referrer} className="flex items-center justify-between py-2 text-sm">
-                  <span className="truncate text-[var(--text)]" dir="ltr">{r.referrer}</span>
+                  <span className="min-w-0 truncate text-[var(--text)]" dir="ltr">{r.referrer}</span>
                   <span className="shrink-0 font-medium text-[var(--text-muted)]">{formatNumber(r.count)}</span>
                 </li>
               ))}

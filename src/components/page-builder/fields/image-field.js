@@ -5,7 +5,7 @@ import { ImagePlus, X } from "lucide-react";
 import { uploadAsset } from "@/lib/page-builder/api";
 import { Button } from "@/components/ui/button";
 
-export function ImageField({ value, onChange }) {
+export function ImageField({ value, onChange, context }) {
   const inputRef = useRef(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState(null);
@@ -15,7 +15,7 @@ export function ImageField({ value, onChange }) {
     setUploading(true);
     setError(null);
     try {
-      const res = await uploadAsset(file);
+      const res = await uploadAsset(file, context);
       if (!res?.url) throw new Error("سرور آدرس تصویر را برنگرداند");
       onChange(res.url);
     } catch (e) {

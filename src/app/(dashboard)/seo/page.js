@@ -20,9 +20,10 @@ import { SeoIssues } from "@/components/seo/seo-issues";
 import { SeoPages } from "@/components/seo/seo-pages";
 import { SeoSettings } from "@/components/seo/seo-settings";
 import { SeoAutofix } from "@/components/seo/seo-autofix";
+import { SeoMissingAlt } from "@/components/seo/seo-missing-alt";
 import { formatDateTime } from "@/lib/utils";
 
-const TABS = ["overview", "issues", "pages", "autofix", "history", "settings"];
+const TABS = ["overview", "issues", "pages", "autofix", "images", "history", "settings"];
 
 function HistoryTab() {
   const { data, isLoading } = useQuery({ queryKey: ["seo-audits"], queryFn: () => fetchSeoAudits(40) });
@@ -151,6 +152,7 @@ function SeoCenter() {
           </TabsTrigger>
           <TabsTrigger value="pages">صفحات</TabsTrigger>
           <TabsTrigger value="autofix">✨ رفع خودکار</TabsTrigger>
+          <TabsTrigger value="images">تصاویر بدون Alt</TabsTrigger>
           <TabsTrigger value="history">تاریخچه</TabsTrigger>
           <TabsTrigger value="settings">تنظیمات</TabsTrigger>
         </TabsList>
@@ -192,6 +194,13 @@ function SeoCenter() {
 
         <TabsContent value="autofix">
           {audit ? <SeoAutofix /> : <p className="text-sm text-[var(--text-muted)]">ابتدا یک ممیزی اجرا کنید.</p>}
+        </TabsContent>
+
+        {/* برخلاف تب‌های بالا، این تب پشت وجود یک ممیزیِ کامل‌شده گیت نیست —
+            مستقیم از Product/BlogPost می‌خواند، چون هدف دیدنِ وضعیت زنده و
+            رفع فوری است، نه گزارش یک اجرای قدیمی. */}
+        <TabsContent value="images">
+          <SeoMissingAlt />
         </TabsContent>
 
         <TabsContent value="history">

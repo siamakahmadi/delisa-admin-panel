@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Ticket as TicketIcon, Inbox, Loader2, CheckCircle2, Send } from "lucide-react";
@@ -17,6 +17,7 @@ import { useToast } from "@/components/ui/toast";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { formatDateTime } from "@/lib/utils";
 import { fetchTickets, sendAdminAnnouncement } from "@/lib/support/api";
+import { getLiveChatSocket } from "@/lib/support/liveChatSocket";
 import {
   TICKET_STATUS_LABELS,
   TICKET_STATUS_VARIANTS,
@@ -105,6 +106,7 @@ function AnnounceDialog({ open, onOpenChange }) {
 
 export default function TicketsListPage() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [tab, setTab] = useState("all");
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebouncedValue(search);
@@ -114,6 +116,24 @@ export default function TicketsListPage() {
     queryKey: ["admin-tickets"],
     queryFn: fetchTickets,
   });
+
+  // Real-time: new chats/tickets and status changes push straight into the
+  // list without waiting for a manual refresh.
+  useEffect(() => {
+    const socket = getLiveChatSocket();
+    if (!socket) return;
+
+    const refetch = () => queryClient.invalidateQueries({ queryKey: ["admin-tickets"] });
+    socket.on("support:new_chat", refetch);
+    socket.on("support:ticket_update", refetch);
+    socket.on("support:message", refetch);
+
+    return () => {
+      socket.off("support:new_chat", refetch);
+      socket.off("support:ticket_update", refetch);
+      socket.off("support:message", refetch);
+    };
+  }, [queryClient]);
 
   const counts = useMemo(() => {
     const c = { all: tickets.length, open: 0, in_progress: 0, waiting: 0, closed: 0 };

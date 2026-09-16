@@ -10,9 +10,15 @@ export default function DashboardLayout({ children }) {
   return (
     <div className="flex min-h-screen bg-[var(--bg)]">
       <Sidebar mobileOpen={mobileOpen} onCloseMobile={() => setMobileOpen(false)} />
-      <div className="flex min-h-screen flex-1 flex-col">
+      {/* min-w-0 is required here: a flex item's default min-width is "auto",
+          meaning it won't shrink below its content's intrinsic width. Without
+          it, any wide child anywhere on any page (a table with min-w-[...],
+          a chart) pushes this whole column — and with it the entire page —
+          wider than the viewport, causing page-level horizontal scroll
+          instead of the wide content scrolling within its own container. */}
+      <div className="flex min-h-screen min-w-0 flex-1 flex-col">
         <Topbar onOpenMobile={() => setMobileOpen(true)} />
-        <main className="flex-1 p-4 md:p-6">{children}</main>
+        <main className="min-w-0 flex-1 p-4 md:p-6">{children}</main>
       </div>
     </div>
   );

@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { CalendarRange, X, Smartphone, Tablet, Monitor } from "lucide-react";
+import { CalendarRange, X, Smartphone, Tablet, Monitor, UserX } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { DataTable } from "@/components/ui/data-table";
 import { Select } from "@/components/ui/select";
@@ -22,12 +22,14 @@ export default function AnalyticsSessionsPage() {
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const [device, setDevice] = useState("");
+  const [loggedIn, setLoggedIn] = useState("");
   const [page, setPage] = useState(1);
 
   const params = {
     from: from || undefined,
     to: to || undefined,
     device: device || undefined,
+    loggedIn: loggedIn || undefined,
     page,
     limit: LIMIT,
   };
@@ -43,6 +45,27 @@ export default function AnalyticsSessionsPage() {
 
   const columns = useMemo(
     () => [
+      {
+        key: "customer",
+        header: "کاربر",
+        render: (row) =>
+          row.customer ? (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                router.push(`/customers/${row.customer.id}`);
+              }}
+              className="text-xs font-medium text-[var(--brand-600)] hover:underline"
+            >
+              {row.customer.name || row.customer.phone || "مشتری"}
+            </button>
+          ) : (
+            <span className="flex items-center gap-1 text-xs text-[var(--text-faint)]">
+              <UserX size={13} />
+              مهمان
+            </span>
+          ),
+      },
       {
         key: "entryPath",
         header: "صفحه ورود",
@@ -72,7 +95,7 @@ export default function AnalyticsSessionsPage() {
       { key: "totalDurationMs", header: "مدت بازدید", render: (row) => formatDurationMs(row.totalDurationMs) },
       { key: "startedAt", header: "تاریخ", render: (row) => formatDateTime(row.startedAt) },
     ],
-    []
+    [router]
   );
 
   return (
@@ -102,6 +125,14 @@ export default function AnalyticsSessionsPage() {
             <option value="mobile">موبایل</option>
             <option value="tablet">تبلت</option>
             <option value="desktop">دسکتاپ</option>
+          </Select>
+        </div>
+
+        <div className="w-40">
+          <Select value={loggedIn} onChange={(e) => { setLoggedIn(e.target.value); setPage(1); }}>
+            <option value="">همه کاربران</option>
+            <option value="true">فقط واردشده‌ها</option>
+            <option value="false">فقط مهمان‌ها</option>
           </Select>
         </div>
       </div>

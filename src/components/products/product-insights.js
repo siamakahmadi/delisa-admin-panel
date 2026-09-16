@@ -11,6 +11,7 @@ import {
   Package,
   Star,
   ImageOff,
+  ExternalLink,
 } from "lucide-react";
 import apiClient from "@/lib/apiClient";
 import { PageHeader } from "@/components/layout/page-header";
@@ -21,6 +22,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { DataTable } from "@/components/ui/data-table";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { formatToman, formatDateTime } from "@/lib/utils";
+import { productSiteUrl } from "@/lib/siteLinks";
 
 const fmt = (n) => Number(n || 0).toLocaleString("fa-IR");
 
@@ -142,7 +144,20 @@ export function ProductInsights({ id }) {
     <div>
       <PageHeader
         title={product.productName}
-        subtitle={product.slug}
+        subtitle={
+          product.slug ? (
+            <a
+              href={productSiteUrl(product.slug)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 hover:text-[var(--brand-600)] hover:underline"
+              title="مشاهده در سایت"
+            >
+              {product.slug}
+              <ExternalLink size={12} />
+            </a>
+          ) : null
+        }
         actions={
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => router.push("/products")}>

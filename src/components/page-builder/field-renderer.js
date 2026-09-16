@@ -91,7 +91,7 @@ function BaseInput({ field, value, onChange }) {
         </select>
       );
     case "image":
-      return <ImageField value={value} onChange={onChange} />;
+      return <ImageField value={value} onChange={onChange} context={field.imageContext} />;
     case "link":
       return <LinkField value={value} onChange={onChange} placeholder={field.placeholder} />;
     case "richtext":

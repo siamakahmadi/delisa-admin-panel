@@ -27,3 +27,5 @@ export const cancelAutofix = () => apiClient.post("/api/admin/seo/autofix/cancel
 export const fetchAutofixJobs = () => apiClient.get("/api/admin/seo/autofix/jobs").then((r) => r.data);
 export const fetchAutofixJob = (id, params) => apiClient.get(`/api/admin/seo/autofix/jobs/${id}`, { params }).then((r) => r.data);
 export const undoAutofix = (id) => apiClient.post(`/api/admin/seo/autofix/jobs/${id}/undo`).then((r) => r.data);
+export const fetchMissingAltImages = (params) => apiClient.get("/api/admin/seo/images/missing-alt", { params }).then((r) => r.data);
+export const setImageAlt = (payload) => apiClient.put("/api/admin/seo/images/missing-alt", payload).then((r) => r.data);
