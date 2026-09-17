@@ -6,6 +6,7 @@ import { SlidersManager } from "@/components/homepage/sliders-manager";
 import { BrandsManager } from "@/components/homepage/brands-manager";
 import { HomeIntroForm } from "@/components/homepage/home-intro-form";
 import { StoriesManager } from "@/components/homepage/stories-manager";
+import { FaqSectionManager } from "@/components/homepage/faq-section-manager";
 
 export default function HomepageLayoutPage() {
   return (
@@ -18,6 +19,7 @@ export default function HomepageLayoutPage() {
           <TabsTrigger value="stories">استوری‌ها</TabsTrigger>
           <TabsTrigger value="brands">برندها</TabsTrigger>
           <TabsTrigger value="intro">معرفی دلیسا</TabsTrigger>
+          <TabsTrigger value="faq">سوالات متداول</TabsTrigger>
         </TabsList>
 
         <TabsContent value="sliders">
@@ -31,6 +33,9 @@ export default function HomepageLayoutPage() {
         </TabsContent>
         <TabsContent value="intro">
           <HomeIntroForm />
+        </TabsContent>
+        <TabsContent value="faq">
+          <FaqSectionManager />
         </TabsContent>
       </Tabs>
     </div>

@@ -17,6 +17,7 @@ import {
   Quote,
   Link2,
   ImageIcon,
+  Type,
   Undo2,
   Redo2,
   Heading2,
@@ -27,6 +28,16 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { uploadBlogImage } from "@/lib/blog/api";
+
+function defaultAltFromFilename(name) {
+  if (!name) return "";
+  return name.replace(/\.[a-zA-Z0-9]+$/, "").replace(/[-_]+/g, " ").trim();
+}
+
+function promptImageAlt(defaultValue) {
+  const alt = window.prompt("متن جایگزین تصویر (Alt) را وارد کنید — برای سئوی تصویر مهم است:", defaultValue || "");
+  return alt === null ? defaultValue || "" : alt;
+}
 
 function ToolbarButton({ onClick, active, disabled, children, title }) {
   return (
@@ -98,10 +109,20 @@ export function RichTextEditor({ value, onChange, placeholder = "محتوای ت
     try {
       const res = await uploadBlogImage(file, "product-reviews");
       const url = res?.url || res?.raw?.url;
-      if (url) editor.chain().focus().setImage({ src: url }).run();
+      if (url) {
+        const alt = promptImageAlt(defaultAltFromFilename(file.name));
+        editor.chain().focus().setImage({ src: url, alt }).run();
+      }
     } finally {
       setUploading(false);
     }
+  };
+
+  const editImageAlt = () => {
+    const prev = editor.getAttributes("image").alt || "";
+    const alt = window.prompt("متن جایگزین تصویر (Alt) را وارد کنید — برای سئوی تصویر مهم است:", prev);
+    if (alt === null) return;
+    editor.chain().focus().updateAttributes("image", { alt }).run();
   };
 
   return (
@@ -138,6 +159,9 @@ export function RichTextEditor({ value, onChange, placeholder = "محتوای ت
         </ToolbarButton>
         <ToolbarButton title="افزودن تصویر" disabled={uploading} onClick={() => fileInputRef.current?.click()}>
           <ImageIcon size={15} />
+        </ToolbarButton>
+        <ToolbarButton title="ویرایش متن جایگزین (Alt) تصویر" disabled={!editor.isActive("image")} onClick={editImageAlt}>
+          <Type size={15} />
         </ToolbarButton>
         <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={onFilePicked} />
         <span className="mx-1 h-4 w-px bg-[var(--border)]" />

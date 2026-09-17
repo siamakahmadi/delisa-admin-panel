@@ -53,6 +53,16 @@ const lowlight = createLowlight(common);
 const PRODUCT_URL_PATTERN = /^https?:\/\/\S+$/i;
 const YOUTUBE_PATTERN = /(youtube\.com|youtu\.be)/i;
 
+function defaultAltFromFilename(name) {
+  if (!name) return "";
+  return name.replace(/\.[a-zA-Z0-9]+$/, "").replace(/[-_]+/g, " ").trim();
+}
+
+function promptImageAlt(defaultValue) {
+  const alt = window.prompt("متن جایگزین تصویر (Alt) را وارد کنید — برای سئوی تصویر مهم است:", defaultValue || "");
+  return alt === null ? defaultValue || "" : alt;
+}
+
 function debounce(fn, delay) {
   let t = null;
   const debounced = (...args) => {
@@ -160,7 +170,10 @@ export const BlogEditor = forwardRef(function BlogEditor({ content, onChange, ed
     if (!file || !file.type?.startsWith("image/")) return null;
     try {
       const res = await uploadBlogImage(file);
-      return res?.url || res?.raw?.url || null;
+      const url = res?.url || res?.raw?.url || null;
+      if (!url) return null;
+      const alt = promptImageAlt(defaultAltFromFilename(file.name));
+      return { url, alt };
     } catch (err) {
       window.alert(err?.response?.data?.message || "خطا در آپلود تصویر");
       return null;
@@ -240,8 +253,8 @@ export const BlogEditor = forwardRef(function BlogEditor({ content, onChange, ed
           const imageFile = Array.from(event.clipboardData?.files || []).find((f) => f.type?.startsWith("image/"));
           if (imageFile) {
             event.preventDefault();
-            uploadImageFile(imageFile).then((url) => {
-              if (url) editor?.chain().focus().setImage({ src: url }).run();
+            uploadImageFile(imageFile).then((img) => {
+              if (img) editor?.chain().focus().setImage({ src: img.url, alt: img.alt }).run();
             });
             return true;
           }
@@ -257,11 +270,11 @@ export const BlogEditor = forwardRef(function BlogEditor({ content, onChange, ed
           const file = Array.from(event.dataTransfer?.files || []).find((f) => f.type?.startsWith("image/"));
           if (!file) return false;
           event.preventDefault();
-          uploadImageFile(file).then((url) => {
-            if (!url || !editor) return;
+          uploadImageFile(file).then((img) => {
+            if (!img || !editor) return;
             const coords = view.posAtCoords({ left: event.clientX, top: event.clientY });
             const pos = coords ? coords.pos : editor.state.selection.from;
-            editor.chain().focus().insertContentAt(pos, { type: "image", attrs: { src: url } }).run();
+            editor.chain().focus().insertContentAt(pos, { type: "image", attrs: { src: img.url, alt: img.alt } }).run();
           });
           return true;
         },
@@ -398,8 +411,8 @@ export const BlogEditor = forwardRef(function BlogEditor({ content, onChange, ed
       const file = e.target.files?.[0];
       e.target.value = "";
       if (!file || !editor) return;
-      const url = await uploadImageFile(file);
-      if (url) editor.chain().focus().setImage({ src: url }).run();
+      const img = await uploadImageFile(file);
+      if (img) editor.chain().focus().setImage({ src: img.url, alt: img.alt }).run();
     },
     [editor, uploadImageFile]
   );

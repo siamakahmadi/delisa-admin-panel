@@ -34,6 +34,11 @@ export const fetchBrandsSectionSettings = () =>
 export const saveBrandsSectionSettings = (enabled) =>
   apiClient.put("/api/admin/settings/brands-section", { enabled }).then((r) => r.data?.brandsSection);
 
+export const fetchFaqSectionSettings = () =>
+  apiClient.get("/api/admin/settings/faq-section").then((r) => r.data?.faqSection);
+export const saveFaqSectionSettings = (enabled) =>
+  apiClient.put("/api/admin/settings/faq-section", { enabled }).then((r) => r.data?.faqSection);
+
 // ---- stories (Instagram-style, row of avatars -> fullscreen viewer) ----
 export const fetchStories = () => apiClient.get("/api/admin/stories").then((r) => normalizeList(r.data));
 export const createStory = (formData) => apiClient.post("/api/admin/stories", formData).then((r) => r.data);

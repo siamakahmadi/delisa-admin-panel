@@ -177,8 +177,11 @@ function FaqForm({ editing, isPending, onCancel, onSubmit }) {
 
         <label className="flex items-center gap-2 text-sm text-[var(--text)]">
           <input type="checkbox" checked={showOnHome} onChange={(e) => setShowOnHome(e.target.checked)} className="h-4 w-4 accent-[var(--brand-600)]" />
-          نمایش در پیش‌نمایش سوالات متداول صفحه اصلی
+          فقط این سوال در پیش‌نمایش صفحه اصلی نشان داده شود
         </label>
+        <p className="-mt-2 text-xs text-[var(--text-faint)]">
+          اختیاری — اگر برای هیچ سوالی این گزینه را نزنید، پیش‌نمایش صفحه اصلی به‌طور خودکار چند سوال اول منتشرشده را نشان می‌دهد.
+        </p>
 
         <div className="flex justify-end gap-2 pt-2">
           <Button variant="outline" onClick={onCancel}>انصراف</Button>
