@@ -65,3 +65,11 @@ export function ticketSenderPhone(ticket) {
   if (!sender || typeof sender !== "object") return "";
   return sender.phone || sender.contactPhone || "";
 }
+
+export function isGuestChat(ticket) {
+  return ticket?.createdByModel === "GuestSession";
+}
+
+export function chatNeedsReply(ticket) {
+  return ticket?.lastMessageSenderModel && ticket.lastMessageSenderModel !== "StaffUser";
+}

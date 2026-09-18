@@ -16,6 +16,9 @@ export const bulkApproveComments = (items) =>
 // ---- tickets ----
 export const fetchTickets = () => apiClient.get("/api/admin/tickets").then((r) => r.data?.tickets || []);
 
+export const fetchLiveChats = () =>
+  apiClient.get("/api/admin/tickets/live").then((r) => r.data?.tickets || []);
+
 export const fetchTicketById = (ticketId) =>
   apiClient.get(`/api/admin/tickets/${ticketId}`).then((r) => r.data?.ticket);
 
@@ -25,8 +28,13 @@ export const fetchTicketMessages = (ticketId) =>
 export const fetchTicketSender = (ticketId) =>
   apiClient.get(`/api/admin/tickets/${ticketId}/sender`).then((r) => r.data?.sender);
 
-export const sendTicketReply = (ticketId, message) =>
-  apiClient.post(`/api/admin/tickets/${ticketId}/messages`, { message }).then((r) => r.data?.newMessage);
+export const sendTicketReply = (ticketId, payload) => {
+  const body = typeof payload === "string" ? { message: payload } : payload;
+  return apiClient.post(`/api/admin/tickets/${ticketId}/messages`, body).then((r) => r.data?.newMessage);
+};
+
+export const markTicketRead = (ticketId) =>
+  apiClient.patch(`/api/admin/tickets/${ticketId}/read`).then((r) => r.data?.ticket);
 
 export const acceptTicket = (ticketId) =>
   apiClient.patch(`/api/admin/tickets/${ticketId}/accept`).then((r) => r.data?.ticket);
