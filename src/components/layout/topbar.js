@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import useUiStore from "@/stores/uiStore";
 import { clearSession, getUser } from "@/lib/auth";
 import { SeoHealthIndicator } from "@/components/seo/seo-health-indicator";
+import { ChatNotificationBell } from "@/components/support/chat-notification-bell";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -36,6 +37,7 @@ export function Topbar({ onOpenMobile }) {
       <div className="flex-1" />
 
       <SeoHealthIndicator />
+      <ChatNotificationBell />
 
       <button
         onClick={toggleTheme}

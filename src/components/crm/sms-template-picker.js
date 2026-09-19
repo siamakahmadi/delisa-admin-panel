@@ -38,26 +38,44 @@ export function SmsTemplateEditor({ open, onOpenChange, template, defaultPurpose
   const [purpose, setPurpose] = useState(template?.purpose || defaultPurpose || SMS_PURPOSES[0][0]);
   const [variables, setVariables] = useState((template?.variables || []).join(","));
   const [description, setDescription] = useState(template?.description || "");
+  const [confirmNoVars, setConfirmNoVars] = useState(false);
+
+  const doSave = () => {
+    const payload = {
+      name,
+      bodyId,
+      purpose,
+      description,
+      variables: variables.split(",").map((s) => s.trim()).filter(Boolean),
+    };
+    saveMutation.mutate(payload);
+  };
 
   const saveMutation = useMutation({
-    mutationFn: () => {
-      const payload = {
-        name,
-        bodyId,
-        purpose,
-        description,
-        variables: variables.split(",").map((s) => s.trim()).filter(Boolean),
-      };
-      return isEdit ? updateSmsTemplate(template._id, payload) : createSmsTemplate(payload);
-    },
+    mutationFn: (payload) => (isEdit ? updateSmsTemplate(template._id, payload) : createSmsTemplate(payload)),
     onSuccess: (saved) => {
       toast.success(isEdit ? "قالب بروزرسانی شد" : "قالب ثبت شد");
       queryClient.invalidateQueries({ queryKey: ["sms-templates"] });
       onOpenChange(false);
+      setConfirmNoVars(false);
       onSaved?.(saved);
     },
     onError: (err) => toast.error(err?.response?.data?.message || "ذخیره ناموفق بود"),
   });
+
+  const handleSaveClick = () => {
+    const hasVars = variables.split(",").map((s) => s.trim()).filter(Boolean).length > 0;
+    if (!hasVars && !confirmNoVars) {
+      // اگر روی پنل ملی‌پیامک الگو حتی یک پارامتر متغیر دارد (مثلاً %0% برای نام
+      // مشتری) و اینجا خالی بماند، هیچ مقداری برای آن جایگاه ارسال نمی‌شود و
+      // مشتری پیامک را با پارامتر خامِ جایگزین‌نشده (مثلاً {0}) دریافت می‌کند —
+      // همان باگی که این هشدار برایش اضافه شد.
+      setConfirmNoVars(true);
+      toast.error("این قالب هیچ متغیری ندارد. اگر متن الگو در ملی‌پیامک پارامتر دارد (مثلاً نام مشتری)، حتماً نام آن را اینجا وارد کنید — وگرنه آن پارامتر برای مشتری به‌صورت خام و جایگزین‌نشده ارسال می‌شود. برای ادامه بدون متغیر، دوباره «ذخیره» را بزنید.");
+      return;
+    }
+    doSave();
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -88,9 +106,18 @@ export function SmsTemplateEditor({ open, onOpenChange, template, defaultPurpose
           </div>
           <div>
             <Label>ترتیب متغیرهای الگو (با کاما — مثلاً name)</Label>
-            <Input value={variables} onChange={(e) => setVariables(e.target.value)} placeholder="name" dir="ltr" />
+            <Input
+              value={variables}
+              onChange={(e) => {
+                setVariables(e.target.value);
+                setConfirmNoVars(false);
+              }}
+              placeholder="name"
+              dir="ltr"
+            />
             <p className="mt-1 text-xs text-[var(--text-faint)]">
-              همان ترتیبی که موقع تایید الگو در پنل ملی‌پیامک برای %%1%%، %%2%%... تعریف کردید.
+              همان ترتیبی که موقع تایید الگو در پنل ملی‌پیامک برای %%1%%، %%2%%... تعریف کردید. اگر این فیلد را خالی
+              بگذارید ولی متن الگو پارامتر داشته باشد، آن پارامتر برای مشتری به‌صورت خام (جایگزین‌نشده) ارسال می‌شود.
             </p>
           </div>
           <div>
@@ -107,9 +134,9 @@ export function SmsTemplateEditor({ open, onOpenChange, template, defaultPurpose
             className="w-full"
             disabled={!name.trim() || !bodyId.trim()}
             loading={saveMutation.isPending}
-            onClick={() => saveMutation.mutate()}
+            onClick={handleSaveClick}
           >
-            ذخیره
+            {confirmNoVars ? "ذخیره بدون متغیر (تایید)" : "ذخیره"}
           </Button>
         </div>
       </DialogContent>
@@ -154,6 +181,7 @@ export function SmsTemplateField({ purpose, templates, smsBodyId, onSelect }) {
         {options.map((t) => (
           <option key={t._id} value={t.bodyId}>
             {t.name}
+            {!t.variables?.length ? " (⚠ بدون متغیر)" : ""}
           </option>
         ))}
       </Select>

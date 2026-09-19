@@ -18,8 +18,15 @@ import { StatCard } from "@/components/dashboard/stat-card";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { formatNumber, formatToman } from "@/lib/utils";
 import { SeoDashboardWidget } from "@/components/seo/seo-dashboard-widget";
+import { DashboardWidgetCustomizer } from "@/components/dashboard/widget-customizer";
+import { useDashboardWidgetPrefs } from "@/components/dashboard/widget-visibility";
+import { RecentOrdersWidget } from "@/components/dashboard/recent-orders-widget";
+import { ChatActivityWidget } from "@/components/dashboard/chat-activity-widget";
+import { StockAlertsWidget } from "@/components/dashboard/stock-alerts-widget";
+import { PendingReviewsWidget } from "@/components/dashboard/pending-reviews-widget";
 
 export default function DashboardPage() {
+  const { ready, isVisible, setVisible } = useDashboardWidgetPrefs();
   const { data, isLoading } = useQuery({
     queryKey: ["dashboard-summary"],
     queryFn: async () => {
@@ -31,45 +38,66 @@ export default function DashboardPage() {
   const summary = data?.summary ?? {};
   const salesChart = Array.isArray(data?.salesChart) ? data.salesChart : [];
 
+  // تا وقتی ترجیح‌های ذخیره‌شده از localStorage خونده نشده هیچی رو مخفی
+  // نکن — وگرنه یک لحظه چشمک همه‌ی ویجت‌ها رو می‌بینی و بعد بعضی‌هاشون
+  // ناپدید می‌شن.
+  const show = (id) => !ready || isVisible(id);
+
   return (
     <div>
-      <PageHeader title="داشبورد" subtitle="نمای کلی وضعیت فروشگاه دلیسا" />
+      <PageHeader
+        title="داشبورد"
+        subtitle="نمای کلی وضعیت فروشگاه دلیسا"
+        actions={ready && <DashboardWidgetCustomizer isVisible={isVisible} setVisible={setVisible} />}
+      />
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard
-          icon={Users}
-          label="تعداد کاربران"
-          value={formatNumber(summary.totalUsers)}
-          color="violet"
-          isLoading={isLoading}
-        />
-        <StatCard
-          icon={ShoppingBag}
-          label="سفارشات ۷ روز اخیر"
-          value={formatNumber(summary.ordersLast7Days)}
-          color="blue"
-          isLoading={isLoading}
-        />
-        <StatCard
-          icon={TrendingUp}
-          label="فروش ماه جاری"
-          value={formatToman(summary.totalSalesThisMonth)}
-          color="pink"
-          isLoading={isLoading}
-        />
-        <StatCard
-          icon={Headset}
-          label="تیکت‌های فعال"
-          value={formatNumber(summary.activeTickets)}
-          color="amber"
-          isLoading={isLoading}
-        />
+      {show("stats") && (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <StatCard
+            icon={Users}
+            label="تعداد کاربران"
+            value={formatNumber(summary.totalUsers)}
+            color="violet"
+            isLoading={isLoading}
+          />
+          <StatCard
+            icon={ShoppingBag}
+            label="سفارشات ۷ روز اخیر"
+            value={formatNumber(summary.ordersLast7Days)}
+            color="blue"
+            isLoading={isLoading}
+          />
+          <StatCard
+            icon={TrendingUp}
+            label="فروش ماه جاری"
+            value={formatToman(summary.totalSalesThisMonth)}
+            color="pink"
+            isLoading={isLoading}
+          />
+          <StatCard
+            icon={Headset}
+            label="تیکت‌های فعال"
+            value={formatNumber(summary.activeTickets)}
+            color="amber"
+            isLoading={isLoading}
+          />
+        </div>
+      )}
+
+      {show("seo") && (
+        <div className="mt-6">
+          <SeoDashboardWidget />
+        </div>
+      )}
+
+      <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
+        {show("orders") && <RecentOrdersWidget />}
+        {show("chat") && <ChatActivityWidget />}
+        {show("stock") && <StockAlertsWidget />}
+        {show("reviews") && <PendingReviewsWidget />}
       </div>
 
-      <div className="mt-6">
-        <SeoDashboardWidget />
-      </div>
-
+      {show("chart") && (
       <Card className="mt-6">
         <CardHeader>
           <CardTitle>روند فروش، سود و سفارشات</CardTitle>
@@ -113,6 +141,7 @@ export default function DashboardPage() {
           </div>
         </CardContent>
       </Card>
+      )}
     </div>
   );
 }
