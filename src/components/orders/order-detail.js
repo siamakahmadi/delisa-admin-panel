@@ -15,6 +15,7 @@ import {
   Store,
   History,
   ExternalLink,
+  UserPlus,
 } from "lucide-react";
 import apiClient from "@/lib/apiClient";
 import { PageHeader } from "@/components/layout/page-header";
@@ -78,6 +79,17 @@ export function OrderDetail({ id }) {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["order", id] }),
   });
 
+  const assignDeliveryMutation = useMutation({
+    mutationFn: () => apiClient.post(`/api/admin/orders/${id}/assign-delivery`),
+    onSuccess: (res) => {
+      const name = res?.data?.delivery?.name;
+      toast.success(name ? `پیک «${name}» تخصیص داده شد` : "نیروی دلیوری تخصیص داده شد");
+      queryClient.invalidateQueries({ queryKey: ["order", id] });
+      queryClient.invalidateQueries({ queryKey: ["orders"] });
+    },
+    onError: (err) => toast.error("خطا", err?.response?.data?.error || "تخصیص پیک ناموفق بود"),
+  });
+
   const vendors = useMemo(() => {
     if (!order?.products?.length) return [];
     const map = new Map();
@@ -86,6 +98,11 @@ export function OrderDetail({ id }) {
       if (!map.has(item.vendor)) map.set(item.vendor, { name: item.vendor, phone: item.vendorPhone });
     });
     return Array.from(map.values());
+  }, [order]);
+
+  const needsDeliveryAssign = useMemo(() => {
+    if (!order || order.status === "cancelled" || order.status === "pending") return false;
+    return !order.delivery && order.status !== "delivered";
   }, [order]);
 
   const timeline = useMemo(() => {
@@ -327,16 +344,8 @@ export function OrderDetail({ id }) {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-1 text-sm text-[var(--text-muted)]">
-              {order.address ? (
-                <>
-                  <p className="font-medium text-[var(--text)]">{order.address?.fullName}</p>
-                  <p dir="ltr">{order.address?.phone}</p>
-                  <p>
-                    {order.address?.city} - {order.address?.street}
-                  </p>
-                  {order.address?.postalCode && <p>کدپستی: {order.address.postalCode}</p>}
-                  {order.address?.locationNote && <p>{order.address.locationNote}</p>}
-                </>
+              {hasAddressContent(order.address) ? (
+                <AddressBlock address={order.address} fallbackPhone={order.customer?.phone} />
               ) : (
                 <p>آدرسی ثبت نشده است.</p>
               )}
@@ -415,6 +424,24 @@ export function OrderDetail({ id }) {
               ) : (
                 <p className="text-[var(--text-faint)]">پیکی تخصیص داده نشده است.</p>
               )}
+              {order.deliveryAssignment?.lastError && (
+                <p className="text-xs text-[var(--danger)]">
+                  {order.deliveryAssignment.lastError === "no_delivery_available"
+                    ? "پیک آنلاین با ظرفیت خالی پیدا نشد."
+                    : `خطای پیک: ${order.deliveryAssignment.lastError}`}
+                </p>
+              )}
+              {needsDeliveryAssign && (
+                <Button
+                  className="mt-2 w-full"
+                  variant="secondary"
+                  loading={assignDeliveryMutation.isPending}
+                  onClick={() => assignDeliveryMutation.mutate()}
+                >
+                  <UserPlus size={16} />
+                  تخصیص نیروی دلیوری
+                </Button>
+              )}
               {order.trackingCode && <Row label="کد رهگیری" value={<span dir="ltr">{order.trackingCode}</span>} />}
               {order.deliveredAt && <Row label="زمان تحویل" value={formatDateTime(order.deliveredAt)} />}
             </CardContent>
@@ -431,5 +458,43 @@ function Row({ label, value, danger }) {
       <span className="text-[var(--text-muted)]">{label}</span>
       <span className={danger ? "font-medium text-[var(--danger)]" : "font-medium text-[var(--text)]"}>{value}</span>
     </div>
+  );
+}
+
+function hasAddressContent(address) {
+  if (!address) return false;
+  return Boolean(
+    address.fullName ||
+      address.phone ||
+      address.firstName ||
+      address.lastName ||
+      address.street ||
+      address.fullAddress ||
+      address.city ||
+      address.province ||
+      address.postalCode ||
+      address.plaque
+  );
+}
+
+function AddressBlock({ address, fallbackPhone }) {
+  const fullName =
+    address.fullName || [address.firstName, address.lastName].filter(Boolean).join(" ").trim();
+  const street = address.street || address.fullAddress;
+  const cityLine = [address.province, address.city].filter(Boolean).join("، ");
+  const extra = [address.plaque && `پلاک ${address.plaque}`, address.unit && `واحد ${address.unit}`]
+    .filter(Boolean)
+    .join("، ");
+
+  return (
+    <>
+      {fullName ? <p className="font-medium text-[var(--text)]">{fullName}</p> : null}
+      {(address.phone || fallbackPhone) && <p dir="ltr">{address.phone || fallbackPhone}</p>}
+      {cityLine ? <p>{cityLine}</p> : null}
+      {street ? <p className="leading-6">{street}</p> : null}
+      {extra ? <p>{extra}</p> : null}
+      {address.postalCode ? <p>کدپستی: {address.postalCode}</p> : null}
+      {address.locationNote && address.locationNote !== extra ? <p>{address.locationNote}</p> : null}
+    </>
   );
 }

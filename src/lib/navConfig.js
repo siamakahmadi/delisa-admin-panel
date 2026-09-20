@@ -20,6 +20,7 @@ import {
   ListChecks,
   Gauge,
   ServerCog,
+  BadgePercent,
 } from "lucide-react";
 
 /* Full information architecture. Every module is reachable from the sidebar;
@@ -49,7 +50,7 @@ const navConfig = [
       { href: "/products/categories", label: "دسته‌بندی‌ها" },
       { href: "/products/brands", label: "برندها" },
       { href: "/products/types", label: "نوع محصول" },
-      { href: "/products/dynamic-price", label: "قیمت‌گذاری پویا" },
+      { href: "/products/dynamic-price", label: "قیمت‌گذاری پویا (درصدی)" },
       { href: "/products/labels", label: "برچسب‌ها" },
       { href: "/products/reviews", label: "نقد و بررسی" },
     ],
@@ -134,6 +135,20 @@ const navConfig = [
     ],
   },
   { type: "link", id: "seo", href: "/seo", label: "مرکز سئو", icon: Gauge },
+  {
+    type: "group",
+    id: "pricing-intelligence",
+    label: "قیمت‌گذاری هوشمند",
+    icon: BadgePercent,
+    items: [
+      { href: "/pricing-intelligence", label: "داشبورد", exact: true },
+      { href: "/pricing-intelligence/market", label: "مقایسه بازار" },
+      { href: "/pricing-intelligence/products", label: "جدول محصولات" },
+      { href: "/pricing-intelligence/simulate", label: "شبیه‌سازی" },
+      { href: "/pricing-intelligence/settings", label: "تنظیمات موتور" },
+      { href: "/pricing-intelligence/audit", label: "تاریخچه و جاب‌ها" },
+    ],
+  },
   { type: "link", id: "system-health", href: "/system-health", label: "وضعیت سیستم", icon: ServerCog },
   { type: "link", id: "feed", href: "/feed", label: "فید", icon: Film },
   { type: "link", id: "loyalty", href: "/loyalty", label: "باشگاه مشتریان", icon: Gem },
