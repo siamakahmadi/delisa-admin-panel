@@ -7,7 +7,6 @@ import Link from "@tiptap/extension-link";
 import Underline from "@tiptap/extension-underline";
 import TextAlign from "@tiptap/extension-text-align";
 import Placeholder from "@tiptap/extension-placeholder";
-import Image from "@tiptap/extension-image";
 import {
   Bold,
   Italic,
@@ -17,7 +16,6 @@ import {
   Quote,
   Link2,
   ImageIcon,
-  Type,
   Undo2,
   Redo2,
   Heading2,
@@ -28,6 +26,9 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { uploadBlogImage } from "@/lib/blog/api";
+import { ArticleImage } from "@/components/blog/editor/extensions/image";
+import { ImageGrid } from "@/components/blog/editor/extensions/image-grid";
+import { ImageGridPicker } from "@/components/blog/editor/layout-picker";
 
 function defaultAltFromFilename(name) {
   if (!name) return "";
@@ -70,7 +71,8 @@ export function RichTextEditor({ value, onChange, placeholder = "محتوای ت
       Link.configure({ openOnClick: false, autolink: true }),
       TextAlign.configure({ types: ["heading", "paragraph"] }),
       Placeholder.configure({ placeholder }),
-      Image.configure({ HTMLAttributes: { loading: "lazy" } }),
+      ArticleImage.configure({ HTMLAttributes: { loading: "lazy" } }),
+      ImageGrid,
     ],
     content: value || "",
     onUpdate: ({ editor: e }) => {
@@ -118,13 +120,6 @@ export function RichTextEditor({ value, onChange, placeholder = "محتوای ت
     }
   };
 
-  const editImageAlt = () => {
-    const prev = editor.getAttributes("image").alt || "";
-    const alt = window.prompt("متن جایگزین تصویر (Alt) را وارد کنید — برای سئوی تصویر مهم است:", prev);
-    if (alt === null) return;
-    editor.chain().focus().updateAttributes("image", { alt }).run();
-  };
-
   return (
     <div className="overflow-hidden rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface)]">
       <div className="flex flex-wrap items-center gap-0.5 border-b border-[var(--border)] bg-[var(--surface-muted)] p-1.5">
@@ -160,9 +155,7 @@ export function RichTextEditor({ value, onChange, placeholder = "محتوای ت
         <ToolbarButton title="افزودن تصویر" disabled={uploading} onClick={() => fileInputRef.current?.click()}>
           <ImageIcon size={15} />
         </ToolbarButton>
-        <ToolbarButton title="ویرایش متن جایگزین (Alt) تصویر" disabled={!editor.isActive("image")} onClick={editImageAlt}>
-          <Type size={15} />
-        </ToolbarButton>
+        <ImageGridPicker editor={editor} />
         <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={onFilePicked} />
         <span className="mx-1 h-4 w-px bg-[var(--border)]" />
         <ToolbarButton title="راست‌چین" active={editor.isActive({ textAlign: "right" })} onClick={() => editor.chain().focus().setTextAlign("right").run()}>

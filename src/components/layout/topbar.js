@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { Menu, Moon, Sun, LogOut, User, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import useUiStore from "@/stores/uiStore";
-import { clearSession, getUser } from "@/lib/auth";
+import { clearSession } from "@/lib/auth";
 import { SeoHealthIndicator } from "@/components/seo/seo-health-indicator";
 import { ChatNotificationBell } from "@/components/support/chat-notification-bell";
 import {
@@ -14,11 +14,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-export function Topbar({ onOpenMobile }) {
+export function Topbar({ user, onOpenMobile }) {
   const router = useRouter();
   const theme = useUiStore((s) => s.theme);
   const toggleTheme = useUiStore((s) => s.toggleTheme);
-  const user = typeof window !== "undefined" ? getUser() : null;
 
   const handleLogout = () => {
     clearSession();

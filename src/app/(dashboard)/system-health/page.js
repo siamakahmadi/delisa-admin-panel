@@ -11,6 +11,7 @@ import { Select } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/toast";
 import { fetchSystemHealth, fetchAppLogs, clearAppLogs, fetchLiaraLogs } from "@/lib/system/api";
+import Link from "next/link";
 import { formatNumber } from "@/lib/utils";
 
 function HealthCard({ icon: Icon, title, ok, loading, lines }) {
@@ -196,7 +197,7 @@ export default function SystemHealthPage() {
     <div>
       <PageHeader
         title="وضعیت سیستم"
-        subtitle="بررسی زنده اتصال دیتابیس، Redis و استوریج، به‌همراه لاگ‌های سرور"
+        subtitle="سلامت سرویس، جاب‌های پس‌زمینه و لاگ اجرا"
         actions={
           <Button variant="ghost" onClick={() => refetch()} loading={isFetching}>
             <RefreshCw size={15} />
@@ -246,6 +247,14 @@ export default function SystemHealthPage() {
           Redis الان وصل نیست و کش روی حافظه داخلی همین پروسه fallback شده — یعنی بین ری‌استارت‌ها یا اگر چند نسخه از بک‌اند همزمان بالا باشه، کش مشترک نیست.
         </div>
       )}
+
+      <Link
+        href="/system/jobs"
+        className="mb-5 flex items-center justify-between gap-3 rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-sm font-semibold text-[var(--text)] hover:bg-[var(--surface-muted)]"
+      >
+        <span>روشن و خاموش کردن جاب‌ها</span>
+        <span className="text-xs font-medium text-[var(--brand-600)]">جاب‌های سرور</span>
+      </Link>
 
       <Tabs defaultValue="app">
         <TabsList>

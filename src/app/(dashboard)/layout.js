@@ -1,25 +1,29 @@
-"use client";
+import { cookies } from "next/headers";
+import { USER_COOKIE } from "@/lib/auth";
+import { DashboardShell } from "@/components/layout/dashboard-shell";
 
-import { useState } from "react";
-import { Sidebar } from "@/components/layout/sidebar";
-import { Topbar } from "@/components/layout/topbar";
+export const dynamic = "force-dynamic";
 
-export default function DashboardLayout({ children }) {
-  const [mobileOpen, setMobileOpen] = useState(false);
+function readUser(raw) {
+  if (!raw) return null;
+  const candidates = [raw];
+  try {
+    candidates.push(decodeURIComponent(raw));
+  } catch {
+    // مقدار کوکی از قبل decode شده است.
+  }
+  for (const value of candidates) {
+    try {
+      const user = JSON.parse(value);
+      if (user && typeof user === "object") return user;
+    } catch {
+      // فرمت بعدی را امتحان می‌کنیم.
+    }
+  }
+  return null;
+}
 
-  return (
-    <div className="flex min-h-screen bg-[var(--bg)]">
-      <Sidebar mobileOpen={mobileOpen} onCloseMobile={() => setMobileOpen(false)} />
-      {/* min-w-0 is required here: a flex item's default min-width is "auto",
-          meaning it won't shrink below its content's intrinsic width. Without
-          it, any wide child anywhere on any page (a table with min-w-[...],
-          a chart) pushes this whole column — and with it the entire page —
-          wider than the viewport, causing page-level horizontal scroll
-          instead of the wide content scrolling within its own container. */}
-      <div className="flex min-h-screen min-w-0 flex-1 flex-col">
-        <Topbar onOpenMobile={() => setMobileOpen(true)} />
-        <main className="min-w-0 flex-1 p-4 md:p-6">{children}</main>
-      </div>
-    </div>
-  );
+export default async function DashboardLayout({ children }) {
+  const raw = (await cookies()).get(USER_COOKIE)?.value ?? null;
+  return <DashboardShell user={readUser(raw)}>{children}</DashboardShell>;
 }

@@ -31,6 +31,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Select } from "@/components/ui/select";
+import { ImageGridPicker } from "./layout-picker";
 
 function Btn({ active, disabled, title, onClick, children }) {
   return (
@@ -186,6 +187,7 @@ export function Toolbar({ editor, onRequestImage, onInsertYoutube, onInsertCallo
       <Btn title="تصویر" onClick={onRequestImage}>
         <ImageIcon size={14} />
       </Btn>
+      <ImageGridPicker editor={editor} />
       <Btn title="جدول" onClick={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()}>
         <TableIcon size={14} />
       </Btn>

@@ -3,7 +3,6 @@
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
 import { useEditor, EditorContent, ReactRenderer } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
-import Image from "@tiptap/extension-image";
 import Link from "@tiptap/extension-link";
 import Underline from "@tiptap/extension-underline";
 import Placeholder from "@tiptap/extension-placeholder";
@@ -36,11 +35,14 @@ import {
   Minus,
   Table as TableIcon,
   Image as ImageIcon,
+  LayoutGrid,
   Video as YoutubeIcon,
   ShoppingBag,
 } from "lucide-react";
 
 import { uploadBlogImage, resolveProductEmbed } from "@/lib/blog/api";
+import { ArticleImage } from "./extensions/image";
+import { ImageGrid } from "./extensions/image-grid";
 import { ProductEmbed } from "./extensions/product-embed";
 import { Callout } from "./extensions/callout";
 import { SlashCommand } from "./extensions/slash-command";
@@ -73,7 +75,7 @@ function debounce(fn, delay) {
   return debounced;
 }
 
-function buildSlashItems({ onImage, onYoutube, onCallout, onProduct }) {
+function buildSlashItems({ onImage, onImageGrid, onYoutube, onCallout, onProduct }) {
   return [
     { title: "تیتر ۱", icon: Heading1, group: "بلوک متنی", command: ({ editor, range }) => editor.chain().focus().deleteRange(range).setNode("heading", { level: 1 }).run() },
     { title: "تیتر ۲", icon: Heading2, group: "بلوک متنی", command: ({ editor, range }) => editor.chain().focus().deleteRange(range).setNode("heading", { level: 2 }).run() },
@@ -105,6 +107,16 @@ function buildSlashItems({ onImage, onYoutube, onCallout, onProduct }) {
       command: ({ editor, range }) => {
         editor.chain().focus().deleteRange(range).run();
         onImage();
+      },
+    },
+    {
+      title: "گالری تصویر",
+      icon: LayoutGrid,
+      description: "چند تصویر را در یک گرید کنار هم بگذارید",
+      group: "رسانه",
+      command: ({ editor, range }) => {
+        editor.chain().focus().deleteRange(range).run();
+        onImageGrid();
       },
     },
     {
@@ -282,7 +294,8 @@ export const BlogEditor = forwardRef(function BlogEditor({ content, onChange, ed
       extensions: [
         StarterKit.configure({ codeBlock: false, link: false }),
         Link.configure({ openOnClick: false, autolink: true, HTMLAttributes: { rel: "noopener noreferrer" } }),
-        Image.configure({ HTMLAttributes: { loading: "lazy" } }),
+        ArticleImage.configure({ HTMLAttributes: { loading: "lazy" } }),
+        ImageGrid,
         Underline,
         Placeholder.configure({ placeholder: ({ node }) => (node.type.name === "heading" ? "تیتر…" : placeholder || "برای شروع بنویسید، یا / را برای دستورات فشار دهید…") }),
         TextAlign.configure({ types: ["heading", "paragraph"] }),
@@ -311,11 +324,19 @@ export const BlogEditor = forwardRef(function BlogEditor({ content, onChange, ed
     []
   );
 
+  const insertImageLayout = useCallback(
+    (layout) => {
+      editor?.chain().focus().insertImageGrid(layout).run();
+    },
+    [editor]
+  );
+
   slashHandlersRef.current = useMemo(
     () => ({
       getItems: (query) => {
         const all = buildSlashItems({
           onImage: requestImageUpload,
+          onImageGrid: () => insertImageLayout("row-2"),
           onYoutube: () => editor && insertYoutube(editor),
           onCallout: () => editor && insertCallout(editor),
           onProduct: () => editor && insertProductPrompt(editor),
@@ -352,7 +373,7 @@ export const BlogEditor = forwardRef(function BlogEditor({ content, onChange, ed
         slashRendererRef.current = null;
       },
     }),
-    [editor, requestImageUpload, insertYoutube, insertCallout, insertProductPrompt]
+    [editor, requestImageUpload, insertImageLayout, insertYoutube, insertCallout, insertProductPrompt]
   );
 
   useEffect(() => {
