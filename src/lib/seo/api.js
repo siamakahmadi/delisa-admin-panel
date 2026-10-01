@@ -29,3 +29,10 @@ export const fetchAutofixJob = (id, params) => apiClient.get(`/api/admin/seo/aut
 export const undoAutofix = (id) => apiClient.post(`/api/admin/seo/autofix/jobs/${id}/undo`).then((r) => r.data);
 export const fetchMissingAltImages = (params) => apiClient.get("/api/admin/seo/images/missing-alt", { params }).then((r) => r.data);
 export const setImageAlt = (payload) => apiClient.put("/api/admin/seo/images/missing-alt", payload).then((r) => r.data);
+
+// رفع سریع (services/seo/quickFix.js)
+export const fetchQuickFix = (reportId) => apiClient.get(`/api/admin/seo/quickfix/${reportId}`).then((r) => r.data);
+export const previewQuickFix = (reportId, patch) => apiClient.post(`/api/admin/seo/quickfix/${reportId}/preview`, { patch }).then((r) => r.data);
+export const applyQuickFix = (reportId, patch) => apiClient.post(`/api/admin/seo/quickfix/${reportId}/apply`, { patch }).then((r) => r.data);
+export const suggestQuickFix = (reportId, group) => apiClient.post(`/api/admin/seo/quickfix/${reportId}/suggest`, { group }).then((r) => r.data);
+export const undoQuickFix = (jobId) => apiClient.post(`/api/admin/seo/quickfix/undo/${jobId}`).then((r) => r.data);

@@ -155,6 +155,7 @@ const navConfig = [
   { type: "link", id: "feed", href: "/feed", label: "فید", icon: Film },
   { type: "link", id: "loyalty", href: "/loyalty", label: "باشگاه مشتریان", icon: Gem },
   { type: "link", id: "mcp-integration", href: "/integrations/mcp", label: "اتصال Claude (MCP)", icon: Plug },
+  { type: "link", id: "torob-order-tracking", href: "/integrations/torob", label: "ردیابی سفارش ترب", icon: Plug },
   { type: "link", id: "crawler", href: "/integrations/crawler", label: "کراولر محصولات", icon: Bot },
   {
     type: "group",

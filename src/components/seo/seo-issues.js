@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ChevronDown, Pencil, ExternalLink, EyeOff, Wrench, Eye as EyeIcon } from "lucide-react";
+import { ChevronDown, Pencil, ExternalLink, EyeOff, Wrench, Eye as EyeIcon, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -15,12 +15,20 @@ import { fetchSeoIssues, muteSeoCheck, unmuteSeoCheck } from "@/lib/seo/api";
 import { SEVERITY, CATEGORY_LABELS, ENTITY_LABELS, CUSTOMER_SITE_URL, scoreColor } from "@/lib/seo/constants";
 import { TrafficDot } from "./severity-icon";
 import { PageReportDialog } from "./page-report-dialog";
+import { QuickFixDialog } from "./quick-fix-dialog";
 
 function GroupPages({ auditId, checkId, groupTitle, onOpenReport }) {
   const [page, setPage] = useState(1);
+  const [quickId, setQuickId] = useState(null);
   const { data, isLoading } = useQuery({ queryKey: ["seo-issue-pages", auditId, checkId, page], queryFn: () => fetchSeoIssues({ auditId, checkId, page, limit: 20 }), keepPreviousData: true });
   const pages = data?.pages || [];
   const pageCount = Math.ceil((data?.total || 0) / 20);
+  // «مورد بعدی»: بعد از رفع، صفحه‌ی بعدیِ قابل‌رفع همین لیست باز می‌شود
+  const goNext = () => {
+    const i = pages.findIndex((p) => p._id === quickId);
+    const next = pages.slice(i + 1).find((p) => p.quickFixable);
+    setQuickId(next ? next._id : null);
+  };
   return (
     <div className="border-t border-[var(--border)] bg-[var(--surface-muted)]/60">
       {isLoading ? (
@@ -35,6 +43,12 @@ function GroupPages({ auditId, checkId, groupTitle, onOpenReport }) {
                 {p.label || p.path}
                 {p.check?.message && p.check.message !== groupTitle && <span className="mr-2 text-[var(--text-faint)]">— {p.check.message}</span>}
               </button>
+              {p.quickFixable && (
+                <Button size="sm" variant="secondary" className="h-7 shrink-0 gap-1 px-2 text-[11px]" onClick={() => setQuickId(p._id)}>
+                  <Zap size={11} />
+                  رفع سریع
+                </Button>
+              )}
               {p.editUrl && (
                 <Link href={p.editUrl} className="flex shrink-0 items-center gap-1 text-[var(--brand-600)] hover:underline">
                   <Pencil size={11} />
@@ -48,6 +62,13 @@ function GroupPages({ auditId, checkId, groupTitle, onOpenReport }) {
           ))}
         </ul>
       )}
+      <QuickFixDialog
+        reportId={quickId}
+        open={!!quickId}
+        onOpenChange={(o) => !o && setQuickId(null)}
+        focusCheck={checkId}
+        onNext={pages.slice(pages.findIndex((p) => p._id === quickId) + 1).some((p) => p.quickFixable) ? goNext : null}
+      />
       {pageCount > 1 && (
         <div className="flex items-center justify-between px-4 py-2 text-[11px] text-[var(--text-muted)]">
           <span>صفحه {page.toLocaleString("fa-IR")} از {pageCount.toLocaleString("fa-IR")}</span>
@@ -131,6 +152,7 @@ export function SeoIssues({ auditId, initialCheck, mutedChecks = [] }) {
                       <span className="truncate">{g.howToFix}</span>
                     </p>
                   </div>
+                  {g.quickFixable && <Badge variant="brand" size="sm"><Zap size={10} />رفع سریع</Badge>}
                   <Badge variant="neutral" size="sm">{CATEGORY_LABELS[g.category] || g.category}</Badge>
                   <Badge variant={SEVERITY[g.severity]?.badge} size="sm">{Number(g.count).toLocaleString("fa-IR")} مورد</Badge>
                   <ChevronDown size={15} className={cn("shrink-0 text-[var(--text-faint)] transition-transform", open && "rotate-180")} />

@@ -190,7 +190,12 @@ export default function CommentsModerationPage() {
     {
       key: "body",
       header: "متن",
-      render: (row) => <p className="line-clamp-2 max-w-[280px] text-xs text-[var(--text-muted)]">{row.comment.body}</p>,
+      render: (row) => (
+        <p className="line-clamp-2 max-w-[280px] text-xs text-[var(--text-muted)]">
+          {row.comment.images?.length ? `📷 ${row.comment.images.length} · ` : ""}
+          {row.comment.body}
+        </p>
+      ),
     },
     {
       key: "status",
@@ -308,6 +313,21 @@ export default function CommentsModerationPage() {
                   <div className="rounded-[var(--radius-md)] bg-[var(--surface-muted)] p-3 text-[var(--text)]">
                     {detail.comment.body}
                   </div>
+                  {detail.comment.recommend === true || detail.comment.recommend === false ? (
+                    <div className="text-xs">
+                      {detail.comment.recommend ? "👍 محصول را پیشنهاد می‌کند" : "👎 محصول را پیشنهاد نمی‌کند"}
+                    </div>
+                  ) : null}
+                  {detail.comment.images?.length ? (
+                    <div className="flex flex-wrap gap-2">
+                      {detail.comment.images.map((src) => (
+                        <a key={src} href={src} target="_blank" rel="noreferrer">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={src} alt="عکس دیدگاه" className="h-24 w-24 rounded-[var(--radius-md)] border border-[var(--border)] object-cover" />
+                        </a>
+                      ))}
+                    </div>
+                  ) : null}
                 </div>
               </DialogDescription>
               <div className="mt-5 flex justify-end gap-2">

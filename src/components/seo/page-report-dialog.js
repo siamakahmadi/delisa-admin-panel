@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ExternalLink, Pencil, RefreshCw, Clock, FileSearch } from "lucide-react";
+import { ExternalLink, Pencil, RefreshCw, Clock, FileSearch, Zap } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -14,6 +14,9 @@ import { CATEGORY_LABELS, ENTITY_LABELS, CUSTOMER_SITE_URL, scoreColor } from "@
 import { ScoreRing } from "./score-ring";
 import { CheckList } from "./check-list";
 import { SerpPreview } from "./serp-preview";
+import { QuickFixDialog } from "./quick-fix-dialog";
+
+const QUICK_FIX_TYPES = ["product", "post", "category", "brand", "tag", "productType"];
 
 function Stat({ label, value, dir }) {
   return (
@@ -26,6 +29,7 @@ function Stat({ label, value, dir }) {
 
 /** گزارش کامل یک صفحه (از جدول صفحات / لیست مشکلات) */
 export function PageReportDialog({ reportId, open, onOpenChange }) {
+  const [quickOpen, setQuickOpen] = useState(false);
   const toast = useToast();
   const queryClient = useQueryClient();
   const { data: report, isLoading } = useQuery({ queryKey: ["seo-page", reportId], queryFn: () => fetchSeoPage(reportId), enabled: !!reportId && open });
@@ -65,9 +69,15 @@ export function PageReportDialog({ reportId, open, onOpenChange }) {
                 <DialogTitle className="mt-1.5 truncate">{r.label}</DialogTitle>
                 <DialogDescription className="truncate" dir="ltr">{r.path}</DialogDescription>
                 <div className="mt-3 flex flex-wrap gap-2">
+                  {QUICK_FIX_TYPES.includes(r.entityType) && r.entityId && (
+                    <Button size="sm" onClick={() => setQuickOpen(true)}>
+                      <Zap size={13} />
+                      رفع سریع
+                    </Button>
+                  )}
                   {r.editUrl && (
                     <Link href={r.editUrl}>
-                      <Button size="sm">
+                      <Button size="sm" variant="outline">
                         <Pencil size={13} />
                         ویرایش
                       </Button>
@@ -146,6 +156,12 @@ export function PageReportDialog({ reportId, open, onOpenChange }) {
           </div>
         )}
       </DialogContent>
+      <QuickFixDialog
+        reportId={reportId}
+        open={quickOpen}
+        onOpenChange={setQuickOpen}
+        onSaved={() => queryClient.invalidateQueries({ queryKey: ["seo-page", reportId] })}
+      />
     </Dialog>
   );
 }
