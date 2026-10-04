@@ -9,7 +9,7 @@ import { Input, Label } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/components/ui/toast";
-import { fetchSeoSettings, updateSeoSettings, fetchSeoChecks, fetchSeoTemplateDefaults, previewSeoTemplate } from "@/lib/seo/api";
+import { fetchSeoSettings, updateSeoSettings, fetchSeoChecks, fetchSeoTemplateDefaults, previewSeoTemplate, fetchSeoRedirects, deleteSeoRedirect } from "@/lib/seo/api";
 import { ENTITY_LABELS, MODE_LABELS, CATEGORY_LABELS } from "@/lib/seo/constants";
 
 function Toggle({ label, hint, checked, onChange }) {
@@ -74,6 +74,48 @@ function TemplateEditor({ type, value, defaults, siteName, onChange }) {
         </div>
       )}
     </div>
+  );
+}
+
+function RedirectsCard() {
+  const toast = useToast();
+  const queryClient = useQueryClient();
+  const { data: items = [], isLoading } = useQuery({ queryKey: ["seo-redirects"], queryFn: fetchSeoRedirects });
+  const remove = useMutation({
+    mutationFn: deleteSeoRedirect,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["seo-redirects"] });
+      toast.success("ریدایرکت حذف شد (تا ۵ دقیقه‌ی آینده روی سایت اعمال می‌شود)");
+    },
+    onError: () => toast.error("حذف ناموفق بود"),
+  });
+  const decode = (p) => {
+    try {
+      return decodeURI(p);
+    } catch {
+      return p;
+    }
+  };
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>ریدایرکت‌های ۳۰۱</CardTitle>
+        <span className="text-[11px] text-[var(--text-faint)]">با «رفع سریع» ساخته می‌شوند؛ سایت تا ۵ دقیقه بعد اعمالشان می‌کند</span>
+      </CardHeader>
+      <CardContent className="space-y-2">
+        {isLoading ? <Skeleton className="h-10 w-full" /> : items.length === 0 ? <p className="text-xs text-[var(--text-faint)]">هنوز ریدایرکتی ثبت نشده.</p> : (
+          items.map((r) => (
+            <div key={r._id} className="flex items-center gap-2 rounded-[var(--radius-md)] bg-[var(--surface-muted)] px-3 py-2 text-xs">
+              <span className="min-w-0 flex-1 truncate" dir="ltr" title={decode(r.from)}>{decode(r.from)}</span>
+              <span className="text-[var(--text-faint)]">←</span>
+              <span className="min-w-0 flex-1 truncate" dir="ltr" title={decode(r.to)}>{decode(r.to)}</span>
+              <span className="text-[10px] text-[var(--text-faint)]">{r.status}</span>
+              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => remove.mutate(r._id)} aria-label="حذف"><Trash2 size={13} /></Button>
+            </div>
+          ))
+        )}
+      </CardContent>
+    </Card>
   );
 }
 
@@ -300,6 +342,7 @@ export function SeoSettings() {
           ذخیره تنظیمات
         </Button>
       </div>
+      <RedirectsCard />
     </div>
   );
 }

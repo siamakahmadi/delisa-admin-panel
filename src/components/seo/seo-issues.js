@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ChevronDown, Pencil, ExternalLink, EyeOff, Wrench, Eye as EyeIcon, Zap } from "lucide-react";
+import { ChevronDown, Pencil, ExternalLink, EyeOff, Wrench, Eye as EyeIcon, Zap, Wand2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -16,6 +16,7 @@ import { SEVERITY, CATEGORY_LABELS, ENTITY_LABELS, CUSTOMER_SITE_URL, scoreColor
 import { TrafficDot } from "./severity-icon";
 import { PageReportDialog } from "./page-report-dialog";
 import { QuickFixDialog } from "./quick-fix-dialog";
+import { BulkFixDialog } from "./bulk-fix-dialog";
 
 function GroupPages({ auditId, checkId, groupTitle, onOpenReport }) {
   const [page, setPage] = useState(1);
@@ -26,7 +27,7 @@ function GroupPages({ auditId, checkId, groupTitle, onOpenReport }) {
   // «مورد بعدی»: بعد از رفع، صفحه‌ی بعدیِ قابل‌رفع همین لیست باز می‌شود
   const goNext = () => {
     const i = pages.findIndex((p) => p._id === quickId);
-    const next = pages.slice(i + 1).find((p) => p.quickFixable);
+    const next = pages[i + 1];
     setQuickId(next ? next._id : null);
   };
   return (
@@ -43,12 +44,10 @@ function GroupPages({ auditId, checkId, groupTitle, onOpenReport }) {
                 {p.label || p.path}
                 {p.check?.message && p.check.message !== groupTitle && <span className="mr-2 text-[var(--text-faint)]">— {p.check.message}</span>}
               </button>
-              {p.quickFixable && (
-                <Button size="sm" variant="secondary" className="h-7 shrink-0 gap-1 px-2 text-[11px]" onClick={() => setQuickId(p._id)}>
-                  <Zap size={11} />
-                  رفع سریع
-                </Button>
-              )}
+              <Button size="sm" variant={p.quickFixable ? "secondary" : "ghost"} className="h-7 shrink-0 gap-1 px-2 text-[11px]" onClick={() => setQuickId(p._id)}>
+                {p.quickFixable ? <Zap size={11} /> : <Wrench size={11} />}
+                {p.quickFixable ? "رفع سریع" : "راهنما"}
+              </Button>
               {p.editUrl && (
                 <Link href={p.editUrl} className="flex shrink-0 items-center gap-1 text-[var(--brand-600)] hover:underline">
                   <Pencil size={11} />
@@ -67,7 +66,7 @@ function GroupPages({ auditId, checkId, groupTitle, onOpenReport }) {
         open={!!quickId}
         onOpenChange={(o) => !o && setQuickId(null)}
         focusCheck={checkId}
-        onNext={pages.slice(pages.findIndex((p) => p._id === quickId) + 1).some((p) => p.quickFixable) ? goNext : null}
+        onNext={pages.slice(pages.findIndex((p) => p._id === quickId) + 1).length ? goNext : null}
       />
       {pageCount > 1 && (
         <div className="flex items-center justify-between px-4 py-2 text-[11px] text-[var(--text-muted)]">
@@ -89,6 +88,7 @@ export function SeoIssues({ auditId, initialCheck, mutedChecks = [] }) {
   const [category, setCategory] = useState("");
   const [expanded, setExpanded] = useState(initialCheck || null);
   const [reportId, setReportId] = useState(null);
+  const [bulk, setBulk] = useState(null);
   // وقتی از هدر/ویجت با ?check= جدید می‌آییم، همان گروه باز شود
   const [seenCheck, setSeenCheck] = useState(initialCheck || null);
   if (initialCheck && initialCheck !== seenCheck) {
@@ -152,7 +152,7 @@ export function SeoIssues({ auditId, initialCheck, mutedChecks = [] }) {
                       <span className="truncate">{g.howToFix}</span>
                     </p>
                   </div>
-                  {g.quickFixable && <Badge variant="brand" size="sm"><Zap size={10} />رفع سریع</Badge>}
+                  {g.bulkable ? <Badge variant="brand" size="sm"><Wand2 size={10} />دسته‌ای</Badge> : g.quickFixable ? <Badge variant="brand" size="sm"><Zap size={10} />رفع سریع</Badge> : null}
                   <Badge variant="neutral" size="sm">{CATEGORY_LABELS[g.category] || g.category}</Badge>
                   <Badge variant={SEVERITY[g.severity]?.badge} size="sm">{Number(g.count).toLocaleString("fa-IR")} مورد</Badge>
                   <ChevronDown size={15} className={cn("shrink-0 text-[var(--text-faint)] transition-transform", open && "rotate-180")} />
@@ -161,10 +161,18 @@ export function SeoIssues({ auditId, initialCheck, mutedChecks = [] }) {
                   <>
                     <div className="flex items-center justify-between border-t border-[var(--border)] px-4 py-2">
                       <p className="text-[11px] text-[var(--text-muted)]">صفحاتی که این مشکل را دارند (بدترین نمره اول)</p>
+                      <div className="flex items-center gap-1">
+                      {g.bulkable && (
+                        <Button size="sm" variant="primary" onClick={() => setBulk(g)}>
+                          <Wand2 size={13} />
+                          رفع دسته‌ای همه
+                        </Button>
+                      )}
                       <Button size="sm" variant="ghost" loading={muteMutation.isPending} onClick={() => muteMutation.mutate({ id: g.checkId, mute: !isMuted })}>
                         {isMuted ? <EyeIcon size={13} /> : <EyeOff size={13} />}
                         {isMuted ? "فعال‌سازی دوباره" : "بی‌صدا کردن این چک"}
                       </Button>
+                      </div>
                     </div>
                     {g.category === "site" ? (
                       <div className="border-t border-[var(--border)] p-4 text-xs text-[var(--text-muted)]">{g.samples?.[0]?.label}</div>
@@ -180,6 +188,7 @@ export function SeoIssues({ auditId, initialCheck, mutedChecks = [] }) {
       )}
 
       <PageReportDialog reportId={reportId} open={!!reportId} onOpenChange={(o) => !o && setReportId(null)} />
+      <BulkFixDialog checkId={bulk?.checkId} title={bulk?.title} open={!!bulk} onOpenChange={(o) => !o && setBulk(null)} />
     </div>
   );
 }

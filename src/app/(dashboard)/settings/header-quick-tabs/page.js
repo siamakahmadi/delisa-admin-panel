@@ -16,7 +16,7 @@ const EMPTY_ITEM = {
   icon: "",
   label: "",
   href: "",
-  badgeColor: "#c62a4d",
+  badgeColor: "#ce3263",
   textColor: "#ffffff",
 };
 

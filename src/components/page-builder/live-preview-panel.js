@@ -17,8 +17,9 @@ const BREAKPOINTS = [
   ["mobile", "موبایل", 375],
 ];
 
-export function LivePreviewPanel({ open, onOpenChange, pageId }) {
-  const [breakpoint, setBreakpoint] = useState("desktop");
+export function LivePreviewPanel({ open, onOpenChange, pageId, pageType }) {
+  const isApp = pageType === "homeApp";
+  const [breakpoint, setBreakpoint] = useState(isApp ? "mobile" : "desktop");
   const [refreshTick, setRefreshTick] = useState(0);
 
   const { data, isLoading, error, refetch } = useQuery({
@@ -73,6 +74,12 @@ export function LivePreviewPanel({ open, onOpenChange, pageId }) {
             تازه‌سازی
           </button>
         </div>
+
+        {isApp && (
+          <p className="mt-2 text-xs leading-5 text-[var(--text-muted)]">
+            این پیش‌نمایش تقریبی است و با رندرر وب ساخته می‌شود. نتیجه نهایی در اپ ممکن است کمی متفاوت باشد؛ بعد از انتشار، اپ با کشیدن صفحه به پایین (Pull to refresh) به‌روز می‌شود.
+          </p>
+        )}
 
         {error && <p className="mt-2 text-xs text-[var(--danger)]">{error.message || "خطا در ساخت پیش‌نمایش زنده"}</p>}
 

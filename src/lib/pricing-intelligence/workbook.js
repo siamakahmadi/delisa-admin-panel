@@ -98,7 +98,7 @@ export function saveLocalWorkbook(workbook) {
       JSON.stringify({
         columns: workbook.columns || [],
         rows: workbook.rows || [],
-        updatedAt: new Date().toISOString(),
+        updatedAt: workbook.updatedAt || new Date().toISOString(),
       })
     );
     return true;

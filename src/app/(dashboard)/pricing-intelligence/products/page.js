@@ -10,6 +10,8 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { parseMoneyInput } from "@/lib/pricing-intelligence/workbook";
 import { useToast } from "@/components/ui/toast";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { useBrands, useCategories } from "@/hooks/use-taxonomies";
@@ -44,6 +46,7 @@ export default function PricingProductsPage() {
   const [salesPerformance, setSalesPerformance] = useState("");
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState([]);
+  const [confirm, setConfirm] = useState(null); // "apply" | "auto"
 
   const { data: brands } = useBrands();
   const { data: categories } = useCategories();
@@ -236,14 +239,19 @@ export default function PricingProductsPage() {
   return (
     <div>
       <PageHeader
-        title="جدول قیمت‌گذاری"
-        subtitle="روی هر محصول کلیک کنید، قیمت خرید را ثبت کنید و لینک صفحه رقبا را برای تحلیل بگذارید"
+        title="جدول محصولات"
+        subtitle="قیمت خرید، قیمت پیشنهادی موتور و وضعیت هر محصول؛ روی ردیف بزن تا جزئیات و لینک رقبا را ببینی"
         actions={
           <Button variant="secondary" onClick={() => router.push("/products/dynamic-price")}>
             قوانین درصدی
           </Button>
         }
       />
+
+      <p className="mb-4 rounded-[var(--radius-md)] bg-[var(--info-bg)] px-4 py-3 text-sm leading-6 text-[var(--info)]">
+        روی «ثبت» در ستون قیمت خرید بزن و قیمت خرید را بنویس. چند محصول را تیک بزن تا «تحلیل»، «تأیید» یا «اعمال ایمن» روی همه‌شان انجام شود.
+        «حاشیه» = سود ÷ قیمت فروش. «اعتماد» یعنی موتور چقدر به داده‌های رقبا و فروش اطمینان دارد.
+      </p>
 
       <div className="mb-4 flex flex-wrap items-end gap-3">
         <div className="relative min-w-[220px] flex-1">
@@ -311,7 +319,7 @@ export default function PricingProductsPage() {
           <Button size="sm" variant="secondary" loading={approveMutation.isPending} onClick={() => approveMutation.mutate(recIds)}>
             تأیید انتخاب‌شده
           </Button>
-          <Button size="sm" variant="secondary" loading={applyMutation.isPending} onClick={() => applyMutation.mutate(recIds)}>
+          <Button size="sm" variant="secondary" loading={applyMutation.isPending} onClick={() => setConfirm("apply")}>
             اعمال ایمن
           </Button>
           {category && (
@@ -345,7 +353,7 @@ export default function PricingProductsPage() {
           <Button
             size="sm"
             variant="outline"
-            onClick={() => strategyMutation.mutate({ productIds: selected, autoPricingEnabled: true })}
+            onClick={() => setConfirm("auto")}
           >
             فعال‌سازی خودکار
           </Button>
@@ -358,6 +366,25 @@ export default function PricingProductsPage() {
           </Button>
         </div>
       )}
+
+      <ConfirmDialog
+        open={!!confirm}
+        onOpenChange={(o) => !o && setConfirm(null)}
+        title={confirm === "apply" ? "اعمال پیشنهادهای ایمن؟" : "فعال‌سازی قیمت‌گذاری خودکار؟"}
+        description={
+          confirm === "apply"
+            ? `قیمت واقعی ${selected.length.toLocaleString("fa-IR")} محصول انتخاب‌شده طبق پیشنهاد موتور (فقط موارد ایمن) همین حالا عوض می‌شود.`
+            : `برای ${selected.length.toLocaleString("fa-IR")} محصول انتخاب‌شده، موتور می‌تواند در سقف‌های تنظیم‌شده قیمت را بدون تأیید دستی تغییر دهد (اگر حالت کلی روی «اعمال خودکار» باشد).`
+        }
+        confirmLabel={confirm === "apply" ? "اعمال" : "فعال‌سازی"}
+        variant={confirm === "apply" ? "danger" : "primary"}
+        loading={applyMutation.isPending || strategyMutation.isPending}
+        onConfirm={() => {
+          const done = { onSettled: () => setConfirm(null) };
+          if (confirm === "apply") applyMutation.mutate(recIds, done);
+          else strategyMutation.mutate({ productIds: selected, autoPricingEnabled: true }, done);
+        }}
+      />
 
       <DataTable
         columns={columns}
@@ -383,7 +410,7 @@ function PurchaseCostCell({ productId, value }) {
   const saveMut = useMutation({
     mutationFn: () =>
       updatePurchaseCosts({
-        items: [{ productId, purchaseCost: draft === "" ? null : Number(draft) }],
+        items: [{ productId, purchaseCost: parseMoneyInput(draft) }],
       }),
     onSuccess: () => {
       toast.success("قیمت خرید ذخیره شد");

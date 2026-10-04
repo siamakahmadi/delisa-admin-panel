@@ -8,7 +8,7 @@ export default function PricingMarketTablePage() {
     <div>
       <PageHeader
         title="جدول مقایسه بازار"
-        subtitle="محصول را با عکس اضافه کنید، قیمت رقبا را بنویسید، میانگین بازار و حاشیه سود را ببینید"
+        subtitle="محصول را اضافه کن، قیمت رقبا را بنویس و میانگین بازار و حاشیه سودت را همان لحظه ببین"
       />
       <PricingWorkbookTable />
     </div>

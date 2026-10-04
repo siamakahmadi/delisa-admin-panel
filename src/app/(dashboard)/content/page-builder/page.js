@@ -16,12 +16,15 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useToast } from "@/components/ui/toast";
 import { formatDate, slugify } from "@/lib/utils";
+import { AppHomeSettings } from "@/components/page-builder/app-home-settings";
 
 function getPreviewPath(page) {
   // homeMobile has no URL of its own — it's the same / as home, just served
   // to mobile-width requests (see back_end's GET /api/cms/pages/home/mobile
   // and delisa-customer/src/pages/index.js).
   if (page.type === "home" || page.type === "homeMobile") return "/";
+  // homeApp is only served to the Delisa Shop app (GET /api/cms/pages/home/app).
+  if (page.type === "homeApp") return "اپلیکیشن";
   if (page.type === "suggest") return "/suggest";
   return `/landing/${page.slug || ""}`;
 }
@@ -56,7 +59,7 @@ export default function PageBuilderListPage() {
   const stats = useMemo(() => {
     const total = pages.length;
     const published = pages.filter((p) => p.status === "published").length;
-    const homeCount = pages.filter((p) => p.type === "home" || p.type === "homeMobile").length;
+    const homeCount = pages.filter((p) => p.type === "home" || p.type === "homeMobile" || p.type === "homeApp").length;
     return { total, published, draft: total - published, homeCount };
   }, [pages]);
 
@@ -86,7 +89,7 @@ export default function PageBuilderListPage() {
             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[var(--radius-sm)] bg-[var(--surface-muted)] text-[var(--text-muted)]">
               {row.type === "home" ? (
                 <Home size={14} />
-              ) : row.type === "homeMobile" ? (
+              ) : row.type === "homeMobile" || row.type === "homeApp" ? (
                 <Smartphone size={14} />
               ) : row.type === "suggest" ? (
                 <Sparkles size={14} />
@@ -101,6 +104,8 @@ export default function PageBuilderListPage() {
                   ? "صفحه اصلی (دسکتاپ)"
                   : row.type === "homeMobile"
                   ? "صفحه اصلی (موبایل)"
+                  : row.type === "homeApp"
+                  ? "صفحه اصلی اپلیکیشن"
                   : row.type === "suggest"
                   ? "پیشنهادهای شخصی‌سازی‌شده"
                   : `لندینگ ${row.slug || ""}`}
@@ -133,9 +138,11 @@ export default function PageBuilderListPage() {
               <Button variant="ghost" size="icon" title="ویرایش" onClick={() => router.push(`/content/page-builder/${row._id || row.id}`)}>
                 <Pencil size={14} />
               </Button>
-              <Button variant="ghost" size="icon" title="مشاهده" onClick={() => window.open(getPreviewPath(row), "_blank", "noopener,noreferrer")}>
-                <Eye size={14} />
-              </Button>
+              {row.type !== "homeApp" && (
+                <Button variant="ghost" size="icon" title="مشاهده" onClick={() => window.open(getPreviewPath(row), "_blank", "noopener,noreferrer")}>
+                  <Eye size={14} />
+                </Button>
+              )}
               {isPublished ? (
                 <Button variant="ghost" size="icon" title="لغو انتشار" onClick={() => actionMutation.mutate({ action: "unpublish", page: row })}>
                   <PauseCircle size={14} className="text-[var(--warning)]" />
@@ -176,6 +183,8 @@ export default function PageBuilderListPage() {
         <StatCard label="صفحه اصلی" value={stats.homeCount} />
       </div>
 
+      <AppHomeSettings pages={pages} />
+
       <div className="mb-4 flex flex-wrap gap-3">
         <Input placeholder="جستجو در عنوان، اسلاگ یا نام داخلی..." className="max-w-xs" value={search} onChange={(e) => setSearch(e.target.value)} />
         <Select className="w-40" value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
@@ -187,6 +196,7 @@ export default function PageBuilderListPage() {
           <option value="">همه انواع</option>
           <option value="home">صفحه اصلی (دسکتاپ)</option>
           <option value="homeMobile">صفحه اصلی (موبایل)</option>
+          <option value="homeApp">صفحه اصلی اپلیکیشن</option>
           <option value="landing">لندینگ</option>
           <option value="suggest">پیشنهادهای شخصی‌سازی‌شده</option>
         </Select>
@@ -255,9 +265,9 @@ function CreatePageForm({ onClose, onCreated }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const isFixedSlugType = type === "home" || type === "homeMobile" || type === "suggest";
+  const isFixedSlugType = type === "home" || type === "homeMobile" || type === "homeApp" || type === "suggest";
   const finalSlug =
-    type === "home" ? "home" : type === "homeMobile" ? "home-mobile" : type === "suggest" ? "suggest" : slug;
+    type === "home" ? "home" : type === "homeMobile" ? "home-mobile" : type === "homeApp" ? "home-app" : type === "suggest" ? "suggest" : slug;
 
   const handleTitleChange = (v) => {
     setTitle(v);
@@ -272,6 +282,9 @@ function CreatePageForm({ onClose, onCreated }) {
     } else if (next === "homeMobile") {
       setSlugTouched(true);
       setSlug("home-mobile");
+    } else if (next === "homeApp") {
+      setSlugTouched(true);
+      setSlug("home-app");
     } else if (next === "suggest") {
       setSlugTouched(true);
       setSlug("suggest");
@@ -288,7 +301,7 @@ function CreatePageForm({ onClose, onCreated }) {
       setError("برای لندینگ، اسلاگ لازم است.");
       return;
     }
-    if (type === "landing" && (finalSlug === "home" || finalSlug === "home-mobile" || finalSlug === "suggest")) {
+    if (type === "landing" && (finalSlug === "home" || finalSlug === "home-mobile" || finalSlug === "home-app" || finalSlug === "suggest")) {
       setError(`اسلاگ "${finalSlug}" رزرو شده است.`);
       return;
     }
@@ -299,6 +312,8 @@ function CreatePageForm({ onClose, onCreated }) {
           ? "صفحه اصلی"
           : type === "homeMobile"
           ? "صفحه اصلی (موبایل)"
+          : type === "homeApp"
+          ? "صفحه اصلی اپلیکیشن"
           : type === "suggest"
           ? "پیشنهادهای شخصی‌سازی‌شده"
           : finalSlug;
@@ -335,6 +350,15 @@ function CreatePageForm({ onClose, onCreated }) {
             <Smartphone size={16} className="mb-1 text-[var(--text-muted)]" />
             <p className="font-medium text-[var(--text)]">صفحه اصلی موبایل</p>
             <p className="text-[var(--text-faint)]">همون / با چیدمان موبایل</p>
+          </button>
+          <button
+            type="button"
+            onClick={() => switchType("homeApp")}
+            className={`rounded-[var(--radius-md)] border p-3 text-start text-xs ${type === "homeApp" ? "border-[var(--brand-500)] bg-[var(--brand-50)]" : "border-[var(--border)]"}`}
+          >
+            <Smartphone size={16} className="mb-1 text-[var(--text-muted)]" />
+            <p className="font-medium text-[var(--text)]">صفحه اصلی اپلیکیشن</p>
+            <p className="text-[var(--text-faint)]">چیدمان جدا فقط برای اپ موبایل</p>
           </button>
           <button
             type="button"

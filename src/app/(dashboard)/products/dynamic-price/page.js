@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Search, Plus, Trash2, Zap, RotateCcw } from "lucide-react";
+import { Search, Plus, Trash2, Zap, RotateCcw, Copy, TrendingUp, TrendingDown } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { DataTable } from "@/components/ui/data-table";
 import { Input } from "@/components/ui/input";
@@ -16,31 +16,11 @@ import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import {
   fetchPricingRules,
   deletePricingRule,
-  applyPricingRuleNow,
-  revertPricingRuleNow,
+  createPricingRule,
 } from "@/lib/pricing/pricing-rules-api";
+import { STATUS_LABELS, summarizeTargets } from "@/lib/pricing/pricing-rule-meta";
+import { usePricingRuleActions } from "@/hooks/use-pricing-rule-actions";
 import { formatNumber, formatDateTime } from "@/lib/utils";
-
-const TARGET_TYPE_LABELS = {
-  all: "همه محصولات",
-  product: "محصول خاص",
-  category: "دسته‌بندی",
-  brand: "برند",
-  tag: "برچسب",
-};
-
-const STATUS_LABELS = {
-  draft: { label: "پیش‌نویس", variant: "neutral" },
-  applied: { label: "اعمال شده", variant: "success" },
-  reverted: { label: "بازگردانی شده", variant: "warning" },
-};
-
-function summarizeTargets(targets = []) {
-  if (!targets.length || targets.some((t) => t.type === "all")) return "همه محصولات";
-  return targets
-    .map((t) => `${TARGET_TYPE_LABELS[t.type] || t.type} (${t.ids?.length ?? 0})`)
-    .join("، ");
-}
 
 export default function DynamicPricePage() {
   const router = useRouter();
@@ -72,45 +52,58 @@ export default function DynamicPricePage() {
     onError: () => toast.error("حذف ناموفق بود"),
   });
 
-  const applyMutation = useMutation({
-    mutationFn: (id) => applyPricingRuleNow(id),
-    onSuccess: (res) => {
-      if (res.syncOk === false) {
-        toast.error(`قیمت پایه ${res.affected ?? "—"} محصول تغییر کرد اما بروزرسانی کاتالوگ نمایشی سایت ناموفق بود — دوباره تلاش کنید`);
-      } else {
-        toast.success(`قیمت ${res.affected ?? "—"} محصول تغییر کرد`);
-      }
+  const duplicateMutation = useMutation({
+    mutationFn: (rule) =>
+      createPricingRule({
+        name: `${rule.name} (کپی)`,
+        description: rule.description,
+        targets: rule.targets,
+        direction: rule.direction,
+        percent: rule.percent,
+        roundingStep: rule.roundingStep,
+        roundingMethod: rule.roundingMethod,
+        minFinalPrice: rule.minFinalPrice,
+        maxFinalPrice: rule.maxFinalPrice,
+      }),
+    onSuccess: (saved) => {
+      toast.success("نسخه‌ی جدید به‌صورت پیش‌نویس ساخته شد");
       invalidate();
+      if (saved?._id) router.push(`/products/dynamic-price/${saved._id}`);
     },
-    onError: (e) => toast.error(e?.response?.data?.error || "اعمال ناموفق بود"),
+    onError: (e) => toast.error(e?.response?.data?.error || "کپی ناموفق بود"),
   });
 
-  const revertMutation = useMutation({
-    mutationFn: (id) => revertPricingRuleNow(id),
-    onSuccess: (res) => {
-      if (res.syncOk === false) {
-        toast.error(`قیمت پایه ${res.affected ?? "—"} محصول بازگردانی شد اما بروزرسانی کاتالوگ نمایشی سایت ناموفق بود — دوباره تلاش کنید`);
-      } else {
-        toast.success(`قیمت ${res.affected ?? "—"} محصول بازگردانی شد`);
-      }
-      invalidate();
-    },
-    onError: (e) => toast.error(e?.response?.data?.error || "بازگردانی ناموفق بود"),
-  });
+  const actions = usePricingRuleActions();
 
   const columns = useMemo(
     () => [
-      { key: "name", header: "نام", render: (row) => <span className="font-medium">{row.name}</span> },
-      { key: "targets", header: "هدف", render: (row) => summarizeTargets(row.targets) },
+      {
+        key: "name",
+        header: "نام",
+        render: (row) => (
+          <div>
+            <div className="font-medium">{row.name}</div>
+            {row.description && (
+              <div className="mt-0.5 line-clamp-1 text-xs text-[var(--text-faint)]">{row.description}</div>
+            )}
+          </div>
+        ),
+      },
+      { key: "targets", header: "هدف", render: (row) => <span className="text-[var(--text-muted)]">{summarizeTargets(row.targets)}</span> },
       {
         key: "amount",
         header: "تغییر",
-        render: (row) => (
-          <Badge variant={row.direction === "increase" ? "success" : "danger"} size="sm">
-            {row.direction === "increase" ? "+" : "-"}
-            {formatNumber(row.percent)}٪
-          </Badge>
-        ),
+        render: (row) => {
+          const up = row.direction === "increase";
+          const Icon = up ? TrendingUp : TrendingDown;
+          return (
+            <Badge variant={up ? "success" : "danger"} size="sm">
+              <Icon size={12} />
+              {up ? "+" : "−"}
+              {formatNumber(row.percent)}٪
+            </Badge>
+          );
+        },
       },
       {
         key: "status",
@@ -120,39 +113,63 @@ export default function DynamicPricePage() {
           return <Badge variant={s.variant} size="sm" dot>{s.label}</Badge>;
         },
       },
-      { key: "affectedCount", header: "تعداد اعمال شده", render: (row) => formatNumber(row.affectedCount) },
-      { key: "lastAppliedAt", header: "آخرین اعمال", render: (row) => (row.lastAppliedAt ? formatDateTime(row.lastAppliedAt) : "—") },
+      {
+        key: "affectedCount",
+        header: "محصولات اعمال‌شده",
+        render: (row) => (row.status === "applied" ? formatNumber(row.affectedCount) : "—"),
+      },
+      {
+        key: "lastAppliedAt",
+        header: "آخرین اعمال",
+        render: (row) => (row.lastAppliedAt ? formatDateTime(row.lastAppliedAt) : "—"),
+      },
       {
         key: "actions",
         header: "",
-        render: (row) => (
-          <div className="flex items-center gap-1">
-            <Button
-              variant="ghost"
-              size="icon"
-              title="اعمال فوری"
-              loading={applyMutation.isPending && applyMutation.variables === row._id}
-              onClick={(e) => { e.stopPropagation(); applyMutation.mutate(row._id); }}
-            >
-              <Zap size={15} className="text-[var(--success)]" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              title="بازگردانی"
-              loading={revertMutation.isPending && revertMutation.variables === row._id}
-              onClick={(e) => { e.stopPropagation(); revertMutation.mutate(row._id); }}
-            >
-              <RotateCcw size={15} />
-            </Button>
-            <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); setDeleteTarget(row); }}>
-              <Trash2 size={15} className="text-[var(--danger)]" />
-            </Button>
-          </div>
-        ),
+        render: (row) => {
+          const applied = row.status === "applied";
+          const stop = (fn) => (e) => { e.stopPropagation(); fn(); };
+          return (
+            <div className="flex items-center gap-1">
+              {applied ? (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  title="بازگردانی قیمت‌ها"
+                  loading={actions.isBusy(row._id)}
+                  onClick={stop(() => actions.askRevert(row))}
+                >
+                  <RotateCcw size={15} className="text-[var(--warning)]" />
+                </Button>
+              ) : (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  title="اعمال روی قیمت‌ها"
+                  loading={actions.isBusy(row._id)}
+                  onClick={stop(() => actions.askApply(row))}
+                >
+                  <Zap size={15} className="text-[var(--success)]" />
+                </Button>
+              )}
+              <Button
+                variant="ghost"
+                size="icon"
+                title="کپی قانون"
+                loading={duplicateMutation.isPending && duplicateMutation.variables?._id === row._id}
+                onClick={stop(() => duplicateMutation.mutate(row))}
+              >
+                <Copy size={15} />
+              </Button>
+              <Button variant="ghost" size="icon" title="حذف" onClick={stop(() => setDeleteTarget(row))}>
+                <Trash2 size={15} className="text-[var(--danger)]" />
+              </Button>
+            </div>
+          );
+        },
       },
     ],
-    [applyMutation, revertMutation]
+    [actions, duplicateMutation]
   );
 
   return (
@@ -167,6 +184,11 @@ export default function DynamicPricePage() {
           </Button>
         }
       />
+
+      <p className="mb-4 rounded-[var(--radius-md)] bg-[var(--info-bg)] px-4 py-3 text-sm text-[var(--info)]">
+        هر قانون قیمت فروش (قیمت نهایی) محصولات هدف را به‌صورت درصدی تغییر می‌دهد. قبل از اعمال، پیش‌نمایش بگیرید؛
+        بعد از اعمال می‌توانید با «بازگردانی» قیمت‌ها را برگردانید. یک قانون را فقط وقتی می‌شود دوباره اعمال کرد که بازگردانی شده باشد.
+      </p>
 
       <div className="mb-4 flex flex-wrap items-center gap-3">
         <div className="relative w-full max-w-xs">
@@ -192,11 +214,17 @@ export default function DynamicPricePage() {
         onRowClick={(row) => router.push(`/products/dynamic-price/${row._id}`)}
       />
 
+      {actions.dialog}
+
       <ConfirmDialog
         open={!!deleteTarget}
         onOpenChange={(open) => !open && setDeleteTarget(null)}
         title="حذف قانون قیمت‌گذاری"
-        description="این قانون حذف می‌شود (قیمت‌های قبلاً اعمال‌شده تغییر نمی‌کنند مگر آنکه بازگردانی کنید). آیا مطمئن هستید؟"
+        description={
+          deleteTarget?.status === "applied"
+            ? "این قانون هنوز روی قیمت‌ها اعمال شده است. با حذف آن دیگر نمی‌توانید قیمت‌ها را با «بازگردانی» برگردانید. بهتر است ابتدا بازگردانی کنید."
+            : "این قانون حذف می‌شود. آیا مطمئن هستید؟"
+        }
         loading={deleteMutation.isPending}
         onConfirm={() => deleteMutation.mutate(deleteTarget._id)}
       />

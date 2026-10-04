@@ -16,7 +16,8 @@ export function Topbar({ onPreview, onPublish, onUnpublish, onDelete, onHistory,
   const isPublished = page?.status === "published" || !!page?.publishedAt;
   const isHome = page?.type === "home";
   const isHomeMobile = page?.type === "homeMobile";
-  const path = isHome || isHomeMobile ? "/" : `/landing/${page?.slug || ""}`;
+  const isHomeApp = page?.type === "homeApp";
+  const path = isHomeApp ? "app" : isHome || isHomeMobile ? "/" : `/landing/${page?.slug || ""}`;
 
   return (
     <header className="flex flex-wrap items-center gap-3 border-b border-[var(--border)] bg-[var(--bg-elevated)] px-4 py-2.5">
@@ -35,8 +36,8 @@ export function Topbar({ onPreview, onPublish, onUnpublish, onDelete, onHistory,
           className="w-full max-w-xs bg-transparent text-sm font-semibold text-[var(--text)] outline-none"
         />
         <div className="mt-0.5 flex items-center gap-2">
-          <Badge variant={isHome || isHomeMobile ? "info" : "brand"} size="sm">
-            {isHome ? "صفحه اصلی" : isHomeMobile ? "صفحه اصلی (موبایل)" : "لندینگ"}
+          <Badge variant={isHome || isHomeMobile || isHomeApp ? "info" : "brand"} size="sm">
+            {isHome ? "صفحه اصلی" : isHomeMobile ? "صفحه اصلی (موبایل)" : isHomeApp ? "صفحه اصلی اپلیکیشن" : "لندینگ"}
           </Badge>
           <code dir="ltr" className="text-[11px] text-[var(--text-faint)]">
             {path}

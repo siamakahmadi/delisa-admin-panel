@@ -22,13 +22,15 @@ export function Sidebar({ mobileOpen, onCloseMobile }) {
   const pathname = usePathname();
   const collapsed = useUiStore((s) => s.sidebarCollapsed);
   const toggleSidebar = useUiStore((s) => s.toggleSidebar);
-  const [overrides, setOverrides] = useState(() => new Map());
+  // Accordion: one group open at a time. A manual choice only lasts for the
+  // page it was made on; navigating falls back to the group of the active route.
+  const [manual, setManual] = useState({ path: null, id: null });
 
   const isGroupOpen = (entry) =>
-    overrides.has(entry.id) ? overrides.get(entry.id) : groupHasActive(pathname, entry);
+    manual.path === pathname ? manual.id === entry.id : groupHasActive(pathname, entry);
 
   const toggleGroup = (entry) => {
-    setOverrides((prev) => new Map(prev).set(entry.id, !isGroupOpen(entry)));
+    setManual({ path: pathname, id: isGroupOpen(entry) ? null : entry.id });
   };
 
   const content = (
@@ -44,8 +46,20 @@ export function Sidebar({ mobileOpen, onCloseMobile }) {
       </div>
 
       <nav className="flex-1 overflow-y-auto scrollbar-none px-3 pb-4">
-        <ul className="space-y-1">
+        <ul className="space-y-0.5">
           {navConfig.map((entry) => {
+            if (entry.type === "section") {
+              return collapsed ? (
+                <li key={entry.id} aria-hidden className="mx-3 my-2 border-t border-white/10" />
+              ) : (
+                <li
+                  key={entry.id}
+                  className="px-3 pb-1 pt-4 text-[11px] font-semibold tracking-wide text-[var(--sidebar-text)] opacity-60"
+                >
+                  {entry.label}
+                </li>
+              );
+            }
             if (entry.type === "link") {
               const active = isActive(pathname, entry.href, entry.exact);
               const Icon = entry.icon;

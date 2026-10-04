@@ -47,11 +47,13 @@ export default function PricingProductDetailPage() {
     enabled: !!id,
   });
 
-  useEffect(() => {
-    if (!data) return;
+  // refill the draft whenever fresh server data arrives (adjusting state during render, not in an effect)
+  const [syncedData, setSyncedData] = useState(null);
+  if (data && data !== syncedData) {
+    setSyncedData(data);
     const next = data.config?.productCfg?.purchaseCost ?? data.analysis?.purchaseCost ?? "";
     setPurchaseCost(next === 0 ? "" : next);
-  }, [data]);
+  }
 
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ["pricing-intelligence-product", id] });
 

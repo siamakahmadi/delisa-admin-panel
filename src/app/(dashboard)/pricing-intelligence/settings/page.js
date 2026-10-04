@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
@@ -21,34 +21,36 @@ import {
 import { MODE_LABELS, STRATEGY_LABELS } from "@/lib/pricing-intelligence/labels";
 
 export default function PricingSettingsPage() {
+  const { data } = useQuery({ queryKey: ["pricing-settings"], queryFn: fetchPricingSettings });
+  if (!data?.settings) return <p className="text-sm text-[var(--text-muted)]">در حال بارگذاری…</p>;
+  return <SettingsForm data={data} />;
+}
+
+function SettingsForm({ data }) {
   const toast = useToast();
   const queryClient = useQueryClient();
-  const { data } = useQuery({ queryKey: ["pricing-settings"], queryFn: fetchPricingSettings });
   const { data: sourcesData } = useQuery({ queryKey: ["competitor-sources"], queryFn: fetchCompetitorSources });
   const { data: brands } = useBrands();
   const { data: categories } = useCategories();
-  const [form, setForm] = useState(null);
+  const [form, setForm] = useState(data.settings);
+  const [dirty, setDirty] = useState(false);
   const [sourceForm, setSourceForm] = useState({ name: "", baseUrl: "", trustScore: 70, refreshIntervalHours: 24 });
-  const [scopeForm, setScopeForm] = useState({ scopeType: "category", scopeId: "", targetMargin: 0.22 });
-
-  useEffect(() => {
-    if (data?.settings) setForm(data.settings);
-  }, [data]);
+  const [scopeForm, setScopeForm] = useState({ scopeType: "category", scopeId: "", targetMargin: 22 });
 
   const saveMut = useMutation({
     mutationFn: () => updatePricingSettings(form),
     onSuccess: () => {
       toast.success("تنظیمات ذخیره شد");
+      setDirty(false);
       queryClient.invalidateQueries({ queryKey: ["pricing-settings"] });
     },
     onError: () => toast.error("ذخیره ناموفق بود"),
   });
 
-  if (!form) return <p className="text-sm text-[var(--text-muted)]">در حال بارگذاری…</p>;
+  const set = (k, v) => { setDirty(true); setForm({ ...form, [k]: v }); };
+  const setCost = (k, v) => { setDirty(true); setForm({ ...form, costComponents: { ...form.costComponents, [k]: v } }); };
 
-  const set = (k, v) => setForm({ ...form, [k]: v });
-  const setCost = (k, v) => setForm({ ...form, costComponents: { ...form.costComponents, [k]: v } });
-
+  const scopeNames = Object.fromEntries([...(brands?.items || brands?.brands || brands || []), ...(categories?.items || categories?.categories || categories || [])].filter((x) => x?._id).map((x) => [String(x._id), x.name]));
   const brandList = Array.isArray(brands) ? brands : brands?.items || brands?.brands || [];
   const categoryList = Array.isArray(categories) ? categories : categories?.items || categories?.categories || [];
 
@@ -56,23 +58,29 @@ export default function PricingSettingsPage() {
     <div>
       <PageHeader
         title="تنظیمات موتور قیمت"
-        subtitle="اولویت: محصول → برند → دسته → سراسری. حالت پیش‌فرض فقط پیشنهاد است و قیمت را عوض نمی‌کند."
-        actions={<Button loading={saveMut.isPending} onClick={() => saveMut.mutate()}>ذخیره تنظیمات سراسری</Button>}
+        subtitle="قوانینی که موتور هنگام ساختن قیمت پیشنهادی رعایت می‌کند"
+        actions={<Button loading={saveMut.isPending} disabled={!dirty} onClick={() => saveMut.mutate()}>{dirty ? "ذخیره تنظیمات" : "ذخیره شد"}</Button>}
       />
+      <p className="mb-4 rounded-[var(--radius-md)] bg-[var(--info-bg)] px-4 py-3 text-sm leading-6 text-[var(--info)]">
+        این تنظیمات برای همه محصولات اعمال می‌شود، مگر اینکه برای یک دسته، برند یا خود محصول چیز دیگری تعیین کنی (اولویت: محصول ← برند ← دسته ← سراسری). حالت پیش‌فرض «فقط پیشنهاد» است و بدون تأیید تو قیمتی عوض نمی‌شود.
+      </p>
 
       <div className="grid gap-4 lg:grid-cols-2">
         <Card>
           <CardHeader><CardTitle>حاشیه سود و موقعیت بازار</CardTitle></CardHeader>
           <CardContent className="grid gap-3 sm:grid-cols-2">
-            <Num label="حداقل حاشیه" value={form.minMargin} onChange={(v) => set("minMargin", v)} />
-            <Num label="حاشیه هدف" value={form.targetMargin} onChange={(v) => set("targetMargin", v)} />
-            <Num label="حاشیه ایده‌آل" value={form.idealMargin} onChange={(v) => set("idealMargin", v)} />
-            <Num label="موقعیت رقابتی نسبت به میانه" value={form.competitivePosition} onChange={(v) => set("competitivePosition", v)} />
+            <Pct label="حداقل حاشیه سود (٪)" hint="زیر این حاشیه هیچ قیمتی پیشنهاد نمی‌شود. حاشیه = (قیمت فروش − قیمت خرید) ÷ قیمت فروش" value={form.minMargin} onChange={(v) => set("minMargin", v)} />
+            <Pct label="حاشیه هدف (٪)" hint="سودی که موتور سعی می‌کند به آن برسد" value={form.targetMargin} onChange={(v) => set("targetMargin", v)} />
+            <Pct label="حاشیه ایده‌آل (٪)" hint="اگر بازار اجازه بدهد، موتور قیمت را تا رسیدن به این حاشیه بالا می‌برد" value={form.idealMargin} onChange={(v) => set("idealMargin", v)} />
+            <Pct label="جایگاه نسبت به میانه بازار (٪)" hint="منفی یعنی کمی ارزان‌تر از میانه‌ی رقبا (مثلاً ۱- = ۱٪ ارزان‌تر)" value={form.competitivePosition} onChange={(v) => set("competitivePosition", v)} />
             <div>
               <Label>حالت کلی</Label>
               <Select value={form.mode} onChange={(e) => set("mode", e.target.value)}>
                 {Object.entries(MODE_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
               </Select>
+              {form.mode === "AUTO" && (
+                <p className="mt-1 text-xs leading-5 text-[var(--warning)]">در این حالت موتور بدون تأیید تو قیمت‌ها را عوض می‌کند (در سقف‌های بخش «ایمنی»).</p>
+              )}
             </div>
             <div>
               <Label>استراتژی پیش‌فرض</Label>
@@ -94,16 +102,16 @@ export default function PricingSettingsPage() {
         <Card>
           <CardHeader><CardTitle>ایمنی و گرد کردن</CardTitle></CardHeader>
           <CardContent className="grid gap-3 sm:grid-cols-2">
-            <Num label="سقف افزایش خودکار ٪" value={form.maxAutomaticIncreasePercent} onChange={(v) => set("maxAutomaticIncreasePercent", v)} />
-            <Num label="سقف کاهش خودکار ٪" value={form.maxAutomaticDecreasePercent} onChange={(v) => set("maxAutomaticDecreasePercent", v)} />
-            <Num label="فاصله زمانی (ساعت)" value={form.cooldownHours} onChange={(v) => set("cooldownHours", v)} />
-            <Num label="گام گرد کردن" value={form.roundingStep} onChange={(v) => set("roundingStep", v)} />
+            <Num label="سقف افزایش خودکار ٪" hint="بیشتر از این درصد در یک بار تغییر نمی‌کند" value={form.maxAutomaticIncreasePercent} onChange={(v) => set("maxAutomaticIncreasePercent", v)} />
+            <Num label="سقف کاهش خودکار ٪" hint="بیشتر از این درصد در یک بار کم نمی‌شود" value={form.maxAutomaticDecreasePercent} onChange={(v) => set("maxAutomaticDecreasePercent", v)} />
+            <Num label="فاصله بین دو تغییر (ساعت)" hint="تا این مدت بعد از هر تغییر، قیمت دوباره عوض نمی‌شود" value={form.cooldownHours} onChange={(v) => set("cooldownHours", v)} />
+            <Num label="گام گرد کردن (تومان)" hint="مثلاً ۱۰۰۰ یعنی قیمت‌ها مضرب هزار می‌شوند" value={form.roundingStep} onChange={(v) => set("roundingStep", v)} />
             <Num label="پایان روان‌شناختی (مثلاً ۹۰۰۰)" value={form.psychologicalEnding} onChange={(v) => set("psychologicalEnding", v || null)} />
-            <Num label="تعدیل درصدی ساده" value={form.simpleAdjustmentPercent} onChange={(v) => set("simpleAdjustmentPercent", v)} />
-            <Num label="آستانه موجودی کم" value={form.lowStockThreshold} onChange={(v) => set("lowStockThreshold", v)} />
-            <Num label="آستانه موجودی زیاد" value={form.mediumStockThreshold} onChange={(v) => set("mediumStockThreshold", v)} />
-            <Num label="حداقل نمونه فروش" value={form.minSalesSample} onChange={(v) => set("minSalesSample", v)} />
-            <Num label="حداقل رقیب برای AUTO" value={form.minValidCompetitorsForAuto} onChange={(v) => set("minValidCompetitorsForAuto", v)} />
+            <Num label="تعدیل درصدی ساده ٪" hint="فقط وقتی «قانون درصدی ساده» روشن باشد" value={form.simpleAdjustmentPercent} onChange={(v) => set("simpleAdjustmentPercent", v)} />
+            <Num label="آستانه موجودی کم (عدد)" hint="کمتر از این = کمیاب؛ قیمت کمی بالا می‌رود" value={form.lowStockThreshold} onChange={(v) => set("lowStockThreshold", v)} />
+            <Num label="آستانه موجودی زیاد (عدد)" hint="بیشتر از این = انبار سنگین؛ تخفیف کوچک پیشنهاد می‌شود" value={form.mediumStockThreshold} onChange={(v) => set("mediumStockThreshold", v)} />
+            <Num label="حداقل نمونه فروش (عدد)" hint="کمتر از این، روند فروش در تصمیم دخیل نمی‌شود" value={form.minSalesSample} onChange={(v) => set("minSalesSample", v)} />
+            <Num label="حداقل رقیب برای حالت خودکار" hint="با رقبای کمتر، اعمال خودکار انجام نمی‌شود" value={form.minValidCompetitorsForAuto} onChange={(v) => set("minValidCompetitorsForAuto", v)} />
           </CardContent>
         </Card>
 
@@ -181,14 +189,14 @@ export default function PricingSettingsPage() {
                 ))}
               </Select>
               <div>
-                <Label>حاشیه هدف</Label>
+                <Label>حاشیه هدف (٪)</Label>
                 <Input value={scopeForm.targetMargin} onChange={(e) => setScopeForm({ ...scopeForm, targetMargin: e.target.value })} />
               </div>
               <Button
                 size="sm"
                 onClick={async () => {
                   try {
-                    await upsertPricingScope({ ...scopeForm, targetMargin: Number(scopeForm.targetMargin) });
+                    await upsertPricingScope({ ...scopeForm, targetMargin: Number(scopeForm.targetMargin) / 100 });
                     toast.success("ذخیره شد");
                     queryClient.invalidateQueries({ queryKey: ["pricing-settings"] });
                   } catch {
@@ -203,7 +211,7 @@ export default function PricingSettingsPage() {
               {(data?.scopes || []).map((s) => (
                 <div key={s._id} className="flex items-center justify-between rounded-[var(--radius-md)] border border-[var(--border)] px-3 py-2 text-sm">
                   <span>
-                    {s.scopeType === "brand" ? "برند" : "دسته"} — حاشیه هدف {s.targetMargin ?? "—"} — استراتژی {s.strategy || "—"}
+                    {s.scopeType === "brand" ? "برند" : "دسته"}: {scopeNames[String(s.scopeId)] || "—"} — حاشیه هدف {s.targetMargin != null ? `${Math.round(s.targetMargin * 1000) / 10}٪` : "—"} — استراتژی {s.strategy || "—"}
                   </span>
                   <Button size="sm" variant="ghost" onClick={async () => { await deletePricingScope(s._id); queryClient.invalidateQueries({ queryKey: ["pricing-settings"] }); }}>
                     حذف
@@ -218,11 +226,24 @@ export default function PricingSettingsPage() {
   );
 }
 
-function Num({ label, value, onChange }) {
+function Num({ label, hint, value, onChange }) {
   return (
     <div>
       <Label>{label}</Label>
       <Input type="number" step="any" value={value ?? ""} onChange={(e) => onChange(e.target.value === "" ? "" : Number(e.target.value))} />
+      {hint && <p className="mt-1 text-[11px] leading-5 text-[var(--text-faint)]">{hint}</p>}
     </div>
+  );
+}
+
+// stored as a ratio (0.22) but edited as a percent (22)
+function Pct({ label, hint, value, onChange }) {
+  return (
+    <Num
+      label={label}
+      hint={hint}
+      value={value == null || value === "" ? "" : Math.round(Number(value) * 10000) / 100}
+      onChange={(v) => onChange(v === "" ? "" : v / 100)}
+    />
   );
 }

@@ -87,3 +87,8 @@ export const fetchSectionTemplates = () => apiClient.get("/api/cms/section-templ
 export const createSectionTemplate = (payload) => apiClient.post("/api/cms/section-templates", payload).then((r) => r.data);
 export const instantiateSectionTemplate = (id) =>
   apiClient.post(`/api/cms/section-templates/${encodeURIComponent(id)}/instantiate`).then((r) => r.data);
+
+/* ---------------- app home (Delisa Shop mobile app) ---------------- */
+// mode: "mirror" (clone the web's mobile home) | "separate" (own page, type=homeApp)
+export const fetchAppHomeSettings = () => apiClient.get("/api/admin/settings/app-home").then((r) => r.data?.appHome);
+export const saveAppHomeSettings = (patch) => apiClient.put("/api/admin/settings/app-home", patch).then((r) => r.data?.appHome);

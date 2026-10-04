@@ -420,7 +420,7 @@ export function PageBuilderEditor({ pageId }) {
         />
       </div>
 
-      <LivePreviewPanel open={previewOpen} onOpenChange={setPreviewOpen} pageId={page?.id} />
+      <LivePreviewPanel open={previewOpen} onOpenChange={setPreviewOpen} pageId={page?.id} pageType={page?.type} />
       <VersionHistoryPanel
         open={historyOpen}
         onOpenChange={setHistoryOpen}

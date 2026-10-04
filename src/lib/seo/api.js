@@ -36,3 +36,11 @@ export const previewQuickFix = (reportId, patch) => apiClient.post(`/api/admin/s
 export const applyQuickFix = (reportId, patch) => apiClient.post(`/api/admin/seo/quickfix/${reportId}/apply`, { patch }).then((r) => r.data);
 export const suggestQuickFix = (reportId, group) => apiClient.post(`/api/admin/seo/quickfix/${reportId}/suggest`, { group }).then((r) => r.data);
 export const undoQuickFix = (jobId) => apiClient.post(`/api/admin/seo/quickfix/undo/${jobId}`).then((r) => r.data);
+export const runQuickFixAction = (reportId, actionId, params) => apiClient.post(`/api/admin/seo/quickfix/${reportId}/action`, { actionId, params }).then((r) => r.data);
+export const fetchQuickFixProducts = (reportId, q) => apiClient.get(`/api/admin/seo/quickfix/${reportId}/products`, { params: { q } }).then((r) => r.data?.items ?? []);
+export const fetchQuickFixTargets = (reportId) => apiClient.get(`/api/admin/seo/quickfix/${reportId}/redirect-targets`).then((r) => r.data?.items ?? []);
+export const lookupQuickFix = (kind, q, type) => apiClient.get("/api/admin/seo/quickfix/lookup", { params: { kind, q, type } }).then((r) => r.data?.items ?? []);
+export const bulkPlanQuickFix = (checkId, page) => apiClient.post("/api/admin/seo/quickfix/bulk/plan", { checkId, page, limit: 15 }).then((r) => r.data);
+export const bulkApplyQuickFix = (items) => apiClient.post("/api/admin/seo/quickfix/bulk/apply", { items }).then((r) => r.data);
+export const fetchSeoRedirects = () => apiClient.get("/api/admin/seo/redirects").then((r) => r.data?.items ?? []);
+export const deleteSeoRedirect = (id) => apiClient.delete(`/api/admin/seo/redirects/${id}`).then((r) => r.data);

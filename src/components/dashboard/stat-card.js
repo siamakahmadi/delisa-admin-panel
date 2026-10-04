@@ -9,7 +9,7 @@ const GRADIENTS = {
   teal: "from-[var(--accent-teal)] to-[var(--accent-cyan)]",
 };
 
-export function StatCard({ icon: Icon, label, value, color = "violet", isLoading }) {
+export function StatCard({ icon: Icon, label, value, color = "violet", isLoading, hint }) {
   return (
     <div className="relative overflow-hidden rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] p-5 shadow-[var(--shadow-sm)]">
       <div
@@ -26,6 +26,7 @@ export function StatCard({ icon: Icon, label, value, color = "violet", isLoading
       ) : (
         <p className="mt-1 text-2xl font-bold text-[var(--text)]">{value}</p>
       )}
+      {hint && !isLoading && <p className="mt-1 text-[11px] leading-5 text-[var(--text-faint)]">{hint}</p>}
       <div
         className={cn(
           "pointer-events-none absolute -left-6 -top-6 h-24 w-24 rounded-full bg-gradient-to-br opacity-10 blur-xl",
