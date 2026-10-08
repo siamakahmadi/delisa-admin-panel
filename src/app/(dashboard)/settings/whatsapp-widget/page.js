@@ -14,7 +14,21 @@ import { useToast } from "@/components/ui/toast";
 const DEFAULTS = {
   enabled: true,
   phone: "",
+  placement: "hub",
 };
+
+const PLACEMENTS = [
+  {
+    value: "hub",
+    title: "داخل ویجت چت (پیشنهادی)",
+    hint: "یک دکمه‌ی کوچک واتس‌اپ در هدر چت پشتیبانی + یک کارت واتس‌اپ به‌عنوان اولین پیام. دکمه‌ی شناور جدایی روی صفحه نمی‌ماند و شلوغی کم می‌شود.",
+  },
+  {
+    value: "floating",
+    title: "دکمه‌ی شناور جدا",
+    hint: "مثل قبل: یک دکمه‌ی شناور مستقل در گوشه‌ی پایین صفحه (فقط دسکتاپ).",
+  },
+];
 
 export default function WhatsappWidgetSettingsPage() {
   const { data, isLoading } = useQuery({
@@ -26,7 +40,7 @@ export default function WhatsappWidgetSettingsPage() {
     <div>
       <PageHeader
         title="ویجت واتس‌اپ"
-        subtitle="دکمه‌ی شناور پشتیبانی واتس‌اپ سایت مشتری — روی موبایل داخل هدر و روی دسکتاپ به‌صورت شناور در گوشه‌ی پایین صفحه نمایش داده می‌شود."
+        subtitle="پشتیبانی واتس‌اپ سایت مشتری — روی موبایل پیل داخل هدر نمایش داده می‌شود و روی دسکتاپ می‌توانید محل نمایش را انتخاب کنید."
       />
 
       {isLoading ? (
@@ -66,6 +80,34 @@ function SettingsForm({ initial }) {
           />
           نمایش ویجت واتس‌اپ در سایت
         </label>
+
+        <div>
+          <Label>محل نمایش (دسکتاپ)</Label>
+          <div className="mt-1 grid gap-2">
+            {PLACEMENTS.map((o) => (
+              <label
+                key={o.value}
+                className={`cursor-pointer rounded-xl border p-3 transition ${
+                  settings.placement === o.value
+                    ? "border-[var(--brand-600)] bg-[var(--brand-50,#fdf2f6)]"
+                    : "border-[var(--border)] hover:border-[var(--text-faint)]"
+                }`}
+              >
+                <span className="flex items-center gap-2 text-sm font-medium text-[var(--text)]">
+                  <input
+                    type="radio"
+                    name="wa-placement"
+                    checked={settings.placement === o.value}
+                    onChange={() => patch({ placement: o.value })}
+                    className="h-4 w-4 accent-[var(--brand-600)]"
+                  />
+                  {o.title}
+                </span>
+                <span className="mt-1 block pr-6 text-xs leading-relaxed text-[var(--text-faint)]">{o.hint}</span>
+              </label>
+            ))}
+          </div>
+        </div>
 
         <div>
           <Label>شماره واتس‌اپ</Label>

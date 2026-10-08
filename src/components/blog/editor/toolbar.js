@@ -28,6 +28,7 @@ import {
   Undo2,
   Redo2,
   Focus,
+  Sparkles,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Select } from "@/components/ui/select";
@@ -70,7 +71,7 @@ const ALIGN_OPTIONS = [
   { value: "justify", label: "بلوکی", icon: AlignJustify },
 ];
 
-export function Toolbar({ editor, onRequestImage, onInsertYoutube, onInsertCallout, onInsertProduct, focusMode, onToggleFocusMode }) {
+export function Toolbar({ editor, onRequestImage, onInsertYoutube, onInsertCallout, onInsertProduct, focusMode, onToggleFocusMode, onAi }) {
   const colorInputRef = useRef(null);
   const [showAlign, setShowAlign] = useState(false);
 
@@ -224,6 +225,20 @@ export function Toolbar({ editor, onRequestImage, onInsertYoutube, onInsertCallo
       <Btn active={focusMode} title="حالت تمرکز" onClick={onToggleFocusMode}>
         <Focus size={14} />
       </Btn>
+      {onAi && (
+        <>
+          <Divider />
+          <button
+            type="button"
+            title="نویسنده‌ی هوشمند"
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={onAi}
+            className="inline-flex h-7 items-center gap-1 rounded-[var(--radius-sm)] bg-[var(--brand-50)] px-2 text-[11px] font-medium text-[var(--brand-700)] hover:bg-[var(--brand-100)]"
+          >
+            <Sparkles size={13} /> هوش مصنوعی
+          </button>
+        </>
+      )}
     </div>
   );
 }

@@ -92,6 +92,13 @@ function SettingsForm({ settings, stats }) {
             onChange={(v) => toggleNow("enabled", v)}
           />
           <Switch
+            label="کامیونیتی در وب‌سایت (دسکتاپ و موبایل) نمایش داده شود"
+            hint="مستقل از اپ قابل خاموش‌کردن است؛ برای نمایش در وب‌سایت کلید «فعال در اپ» (کلید اصلی کامیونیتی) هم باید روشن باشد."
+            checked={form.webEnabled !== false}
+            disabled={mutation.isPending}
+            onChange={(v) => toggleNow("webEnabled", v)}
+          />
+          <Switch
             label="هر پست قبل از انتشار تایید شود"
             hint="پست‌های جدید «در انتظار تایید» می‌مانند و فقط نویسنده می‌بیند؛ از تب «پست‌ها» تایید کن."
             checked={form.requireApproval}

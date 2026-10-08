@@ -56,6 +56,8 @@ export default function ImageOptimizationPage() {
         />
       )}
 
+      <DisplayScaleSettings />
+
       <TestOptimizer />
       <BucketAudit />
       <BulkOptimizer />
@@ -497,6 +499,145 @@ function BulkOptimizer() {
             )}
           </div>
         )}
+      </CardContent>
+    </Card>
+  );
+}
+
+
+/* ───── اندازه‌ی نمایش تصویر محصول در جاهای مختلف سایت و اپ ───── */
+
+const PLACEMENTS = [
+  { key: "carousel", label: "کاروسل‌های محصول", hint: "مینی‌کاروسل صفحه اصلی و بلوک‌های کمپین (اپ)" },
+  { key: "grid", label: "لیست محصولات", hint: "دسته‌بندی، برند، جستجو، علاقه‌مندی‌ها و دانشنامه زیبایی" },
+  { key: "related", label: "محصولات مشابه", hint: "اسلایدر پایین صفحه محصول" },
+  { key: "cms", label: "بلوک‌های صفحه‌ساز", hint: "کاروسل و گرید محصولات داخل صفحاتی که با صفحه‌ساز ساخته‌اید" },
+  { key: "aiChat", label: "چت هوشمند", hint: "کارت‌های پیشنهادی دستیار هوشمند" },
+];
+
+function DisplayScaleSettings() {
+  const toast = useToast();
+  const queryClient = useQueryClient();
+  const { data, isLoading } = useQuery({
+    queryKey: ["product-card-settings"],
+    queryFn: async () => (await apiClient.get("/api/admin/settings/product-card")).data,
+  });
+
+  if (isLoading) return <Skeleton className="h-56 w-full max-w-3xl" />;
+  return (
+    <DisplayScaleForm
+      initial={data?.productCard?.placementScales || {}}
+      min={data?.placementScaleMin || 30}
+      cardFit={{ desktop: data?.productCard?.desktop?.fit, mobile: data?.productCard?.mobile?.fit }}
+      cardScale={{ desktop: data?.productCard?.desktop?.imageScale, mobile: data?.productCard?.mobile?.imageScale }}
+      toast={toast}
+      queryClient={queryClient}
+    />
+  );
+}
+
+function DisplayScaleForm({ initial, min, cardFit, cardScale, toast, queryClient }) {
+  const [values, setValues] = useState(() =>
+    Object.fromEntries(PLACEMENTS.map((p) => [p.key, Number(initial[p.key]) || 0]))
+  );
+
+  const saveMutation = useMutation({
+    mutationFn: () => apiClient.put("/api/admin/settings/product-card", { productCard: { placementScales: values } }),
+    onSuccess: () => {
+      toast.success("اندازه‌ی تصاویر ذخیره شد");
+      queryClient.invalidateQueries({ queryKey: ["product-card-settings"] });
+    },
+    onError: (e) => toast.error(e?.response?.data?.error || "ذخیره ناموفق بود"),
+  });
+
+  const set = (key, v) => setValues((prev) => ({ ...prev, [key]: v }));
+  const coverNote = cardFit.desktop === "cover" || cardFit.mobile === "cover";
+
+  return (
+    <Card className="max-w-3xl">
+      <CardContent className="space-y-4 p-5">
+        <div>
+          <h2 className="text-base font-semibold text-[var(--text)]">اندازه‌ی نمایش تصویر محصول در هر بخش</h2>
+          <p className="mt-1 text-xs leading-6 text-[var(--text-muted)]">
+            تصویر محصول داخل قاب کارت چند درصد از قاب را پر کند؛ از {fmtNum(min)}٪ تا ۱۰۰٪ (۱۰۰٪ = کل قاب). برای هر بخش
+            می‌توانید جدا تعیین کنید. «پیش‌فرض» یعنی همان مقداری که در «کارت محصول» تنظیم شده
+            ({fmtNum(cardScale.desktop ?? 80)}٪ دسکتاپ، {fmtNum(cardScale.mobile ?? 80)}٪ موبایل).
+          </p>
+          {coverNote && (
+            <p className="mt-1 text-xs text-[var(--warning)]">
+              در دستگاهی که حالت «پر کردن قاب (cover)» دارد تصویر همیشه ۱۰۰٪ است و این تنظیم اثری ندارد.
+            </p>
+          )}
+        </div>
+
+        <div className="space-y-3">
+          {PLACEMENTS.map((p) => {
+            const custom = values[p.key] > 0;
+            return (
+              <div
+                key={p.key}
+                className="rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface-muted)] p-3"
+              >
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <div className="text-sm font-medium text-[var(--text)]">{p.label}</div>
+                    <div className="text-xs text-[var(--text-faint)]">{p.hint}</div>
+                  </div>
+                  <label className="flex items-center gap-2 text-xs text-[var(--text)]">
+                    <input
+                      type="checkbox"
+                      className="h-4 w-4 accent-[var(--brand-600)]"
+                      checked={!custom}
+                      onChange={(e) => set(p.key, e.target.checked ? 0 : 80)}
+                    />
+                    پیش‌فرض کارت
+                  </label>
+                </div>
+                {custom && (
+                  <div className="mt-3 flex items-center gap-3">
+                    <input
+                      type="range"
+                      min={min}
+                      max={100}
+                      step={1}
+                      value={values[p.key]}
+                      onChange={(e) => set(p.key, Number(e.target.value))}
+                      className="h-2 flex-1 accent-[var(--brand-600)]"
+                      aria-label={p.label}
+                    />
+                    <div className="flex items-center gap-1">
+                      <Input
+                        type="number"
+                        min={min}
+                        max={100}
+                        value={values[p.key]}
+                        onChange={(e) => set(p.key, Math.min(100, Math.max(min, Number(e.target.value) || min)))}
+                        className="h-8 w-20 text-center"
+                      />
+                      <span className="text-sm text-[var(--text-muted)]">٪</span>
+                    </div>
+                    <div
+                      className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-[var(--radius-sm,6px)] border border-[var(--border)] bg-white"
+                      aria-hidden
+                    >
+                      <div
+                        className="rounded-sm bg-[var(--brand-100,#e5e7eb)]"
+                        style={{ width: `${values[p.key]}%`, height: `${values[p.key]}%` }}
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="flex justify-end">
+          <Button onClick={() => saveMutation.mutate()} loading={saveMutation.isPending}>
+            <Save size={16} />
+            ذخیره
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );

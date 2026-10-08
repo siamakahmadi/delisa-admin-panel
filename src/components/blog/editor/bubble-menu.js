@@ -1,7 +1,7 @@
 "use client";
 
 import { BubbleMenu } from "@tiptap/react/menus";
-import { Bold, Italic, Underline as UnderlineIcon, Strikethrough, Highlighter, Link2, Eraser, Type } from "lucide-react";
+import { Bold, Italic, Underline as UnderlineIcon, Strikethrough, Highlighter, Link2, Link2Off, Eraser, Type, Heading2, Heading3, List, ListOrdered, Quote } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 function BubbleBtn({ active, title, onClick, children }) {
@@ -68,6 +68,27 @@ export function EditorBubbleMenu({ editor }) {
             </BubbleBtn>
             <BubbleBtn active={editor.isActive("link")} title="لینک" onClick={setLink}>
               <Link2 size={14} />
+            </BubbleBtn>
+            {editor.isActive("link") && (
+              <BubbleBtn title="حذف لینک" onClick={() => editor.chain().focus().extendMarkRange("link").unsetLink().run()}>
+                <Link2Off size={14} />
+              </BubbleBtn>
+            )}
+            <span className="mx-0.5 h-4 w-px bg-white/15" />
+            <BubbleBtn active={editor.isActive("heading", { level: 2 })} title="تیتر ۲" onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}>
+              <Heading2 size={14} />
+            </BubbleBtn>
+            <BubbleBtn active={editor.isActive("heading", { level: 3 })} title="تیتر ۳" onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}>
+              <Heading3 size={14} />
+            </BubbleBtn>
+            <BubbleBtn active={editor.isActive("bulletList")} title="لیست نقطه‌ای" onClick={() => editor.chain().focus().toggleBulletList().run()}>
+              <List size={14} />
+            </BubbleBtn>
+            <BubbleBtn active={editor.isActive("orderedList")} title="لیست شماره‌دار" onClick={() => editor.chain().focus().toggleOrderedList().run()}>
+              <ListOrdered size={14} />
+            </BubbleBtn>
+            <BubbleBtn active={editor.isActive("blockquote")} title="نقل قول" onClick={() => editor.chain().focus().toggleBlockquote().run()}>
+              <Quote size={14} />
             </BubbleBtn>
             <span className="mx-0.5 h-4 w-px bg-white/15" />
             <BubbleBtn title="پاک‌کردن قالب‌بندی" onClick={() => editor.chain().focus().unsetAllMarks().run()}>

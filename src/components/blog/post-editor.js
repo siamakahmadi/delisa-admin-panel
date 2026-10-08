@@ -13,6 +13,7 @@ import { useToast } from "@/components/ui/toast";
 import { cn, slugify } from "@/lib/utils";
 import { DateTimeField } from "@/components/page-builder/fields/datetime-field";
 import { BlogEditor } from "@/components/blog/editor/blog-editor";
+import { FieldAi } from "@/components/ai/field-ai";
 import { CategorySelect } from "@/components/blog/category-select";
 import { TagSelect } from "@/components/blog/tag-select";
 import { RevisionsPanel } from "@/components/blog/revisions-panel";
@@ -70,6 +71,7 @@ export function PostEditor({ mode, postId: initialPostId }) {
   const seoContentTimerRef = useRef(null);
   const contentSnapshotRef = useRef({ json: null, html: "", text: "", wordCount: 0, readingTimeMinutes: 0 });
   const editorRef = useRef(null);
+  const aiContext = { entityType: "post", title, keyword: String(seoKeywords || "").split(",")[0].trim() };
 
   const [saveState, setSaveState] = useState("idle");
   const [saving, setSaving] = useState(false);
@@ -404,6 +406,18 @@ export function PostEditor({ mode, postId: initialPostId }) {
             ) : null}
           </div>
 
+          <div className="mb-1 flex justify-end">
+            <FieldAi
+              tasks={["excerpt"]} source={seoContentHtml}
+              label="نوشتن خلاصه با AI"
+              value={excerpt}
+              context={aiContext}
+              onChange={(v) => {
+                setExcerpt(v);
+                markDirty();
+              }}
+            />
+          </div>
           <textarea
             className="mb-4 w-full max-w-full resize-none break-words rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface)] px-3 py-2.5 text-sm text-[var(--text)] outline-none placeholder:text-[var(--text-faint)] focus:border-[var(--brand-500)] focus:ring-2 focus:ring-[var(--brand-100)]"
             placeholder="خلاصه کوتاه (برای کارت‌ها و سئو استفاده می‌شود)…"
@@ -415,7 +429,7 @@ export function PostEditor({ mode, postId: initialPostId }) {
             }}
           />
 
-          <BlogEditor ref={editorRef} content={initialContent} onChange={onEditorChange} />
+          <BlogEditor ref={editorRef} content={initialContent} onChange={onEditorChange} aiContext={aiContext} />
         </main>
 
         <aside className="w-80 shrink-0 space-y-4 overflow-y-auto">
@@ -494,11 +508,17 @@ export function PostEditor({ mode, postId: initialPostId }) {
               {showSeo && (
                 <div className="mt-3 space-y-3">
                   <div>
-                    <Label>عنوان سئو</Label>
+                    <div className="flex items-center justify-between">
+                      <Label>عنوان سئو</Label>
+                      <FieldAi tasks={["seo-title"]} source={seoContentHtml} label="پیشنهاد" value={seoTitle} context={aiContext} onChange={(v) => { setSeoTitle(v); markDirty(); }} />
+                    </div>
                     <Input value={seoTitle} onChange={(e) => { setSeoTitle(e.target.value); markDirty(); }} />
                   </div>
                   <div>
-                    <Label>توضیح متا</Label>
+                    <div className="flex items-center justify-between">
+                      <Label>توضیح متا</Label>
+                      <FieldAi tasks={["meta-description"]} source={seoContentHtml} label="پیشنهاد" value={seoDescription} context={aiContext} onChange={(v) => { setSeoDescription(v); markDirty(); }} />
+                    </div>
                     <textarea
                       rows={2}
                       value={seoDescription}

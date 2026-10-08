@@ -5,6 +5,7 @@ import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Link from "@tiptap/extension-link";
 import Underline from "@tiptap/extension-underline";
+import Highlight from "@tiptap/extension-highlight";
 import TextAlign from "@tiptap/extension-text-align";
 import Placeholder from "@tiptap/extension-placeholder";
 import {
@@ -23,12 +24,15 @@ import {
   AlignRight,
   AlignCenter,
   AlignLeft,
+  Sparkles,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { uploadBlogImage } from "@/lib/blog/api";
 import { ArticleImage } from "@/components/blog/editor/extensions/image";
 import { ImageGrid } from "@/components/blog/editor/extensions/image-grid";
 import { ImageGridPicker } from "@/components/blog/editor/layout-picker";
+import { EditorBubbleMenu } from "@/components/blog/editor/bubble-menu";
+import { EditorAiDialog } from "@/components/ai/editor-ai-dialog";
 
 function defaultAltFromFilename(name) {
   if (!name) return "";
@@ -58,8 +62,9 @@ function ToolbarButton({ onClick, active, disabled, children, title }) {
   );
 }
 
-export function RichTextEditor({ value, onChange, placeholder = "محتوای تفصیلی را اینجا بنویسید...", disabled }) {
+export function RichTextEditor({ value, onChange, placeholder = "محتوای تفصیلی را اینجا بنویسید...", disabled, aiContext }) {
   const fileInputRef = useRef(null);
+  const [aiOpen, setAiOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
 
   const editor = useEditor({
@@ -68,6 +73,7 @@ export function RichTextEditor({ value, onChange, placeholder = "محتوای ت
     extensions: [
       StarterKit.configure({ heading: { levels: [2, 3] } }),
       Underline,
+      Highlight.configure({ multicolor: false }),
       Link.configure({ openOnClick: false, autolink: true }),
       TextAlign.configure({ types: ["heading", "paragraph"] }),
       Placeholder.configure({ placeholder }),
@@ -174,7 +180,23 @@ export function RichTextEditor({ value, onChange, placeholder = "محتوای ت
         <ToolbarButton title="ازنو" onClick={() => editor.chain().focus().redo().run()}>
           <Redo2 size={15} />
         </ToolbarButton>
+        {!disabled && (
+          <>
+            <span className="mx-1 h-4 w-px bg-[var(--border)]" />
+            <button
+              type="button"
+              title="نویسنده‌ی هوشمند"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => setAiOpen(true)}
+              className="inline-flex h-7 items-center gap-1 rounded-[var(--radius-sm)] bg-[var(--brand-50)] px-2 text-[11px] font-medium text-[var(--brand-700)] hover:bg-[var(--brand-100)]"
+            >
+              <Sparkles size={13} /> هوش مصنوعی
+            </button>
+          </>
+        )}
       </div>
+      <EditorAiDialog editor={editor} open={aiOpen} onOpenChange={setAiOpen} context={aiContext} />
+      {!disabled && <EditorBubbleMenu editor={editor} />}
       <EditorContent editor={editor} dir="rtl" />
     </div>
   );

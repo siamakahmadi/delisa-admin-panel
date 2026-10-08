@@ -259,6 +259,7 @@ const navConfig = [
     icon: Plug,
     items: [
       { href: "/integrations/mcp", label: "اتصال Claude (MCP)" },
+      { href: "/integrations/payment-gateways", label: "درگاه‌های پرداخت" },
       { href: "/integrations/torob", label: "ردیابی سفارش ترب" },
       { href: "/integrations/crawler", label: "کراولر محصولات" },
     ],

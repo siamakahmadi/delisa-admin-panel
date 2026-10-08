@@ -20,6 +20,7 @@ import { FeaturesEditor } from "./features-editor";
 import { AttributesEditor } from "./attributes-editor";
 import { FaqEditor } from "./faq-editor";
 import { QuickAddDialog } from "./quick-add-dialog";
+import { FieldAi } from "@/components/ai/field-ai";
 
 const MAX_IMAGES = 6;
 
@@ -222,6 +223,15 @@ export function ProductForm({ product }) {
     return fd;
   };
 
+  const aiContext = {
+    entityType: "product",
+    title: productName,
+    brand: brands?.find?.((b) => (b._id || b.id) === brand)?.name || "",
+    category: categories?.find?.((c) => c._id === selectedCategories[0])?.name || "",
+    keyword: Array.isArray(seoKeywords) ? seoKeywords[0] || "" : "",
+    features: (features || []).filter((f) => f.title && f.value).map((f) => `${f.title}: ${f.value}`),
+  };
+
   const mutation = useMutation({
     mutationFn: (publish) => {
       const fd = buildFormData(publish);
@@ -301,7 +311,17 @@ export function ProductForm({ product }) {
               </div>
             </div>
             <div>
-              <Label>توضیحات محصول</Label>
+              <div className="flex items-center justify-between">
+                <Label>توضیحات محصول</Label>
+                <FieldAi
+                  tasks={["product-description", "seo-optimize", "rewrite", "expand", "shorten", "proofread", "faq", "custom"]}
+                  label="نوشتن / بهبود با AI"
+                  value={description}
+                  context={aiContext}
+                  onChange={setDescription}
+                  allowAppend
+                />
+              </div>
               <textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
@@ -414,7 +434,10 @@ export function ProductForm({ product }) {
           <Section title="تنظیمات سئو">
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
-                <Label>عنوان سئو</Label>
+                <div className="flex items-center justify-between">
+                  <Label>عنوان سئو</Label>
+                  <FieldAi tasks={["seo-title"]} label="پیشنهاد" value={seoTitle} source={description} context={aiContext} onChange={setSeoTitle} />
+                </div>
                 <Input value={seoTitle} onChange={(e) => setSeoTitle(e.target.value)} />
               </div>
               <div>
@@ -423,7 +446,10 @@ export function ProductForm({ product }) {
               </div>
             </div>
             <div>
-              <Label>توضیحات متا</Label>
+              <div className="flex items-center justify-between">
+                <Label>توضیحات متا</Label>
+                <FieldAi tasks={["meta-description"]} label="پیشنهاد" value={seoDescription} source={description} context={aiContext} onChange={setSeoDescription} />
+              </div>
               <textarea
                 value={seoDescription}
                 onChange={(e) => setSeoDescription(e.target.value)}

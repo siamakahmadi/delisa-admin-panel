@@ -49,6 +49,7 @@ import { SlashCommand } from "./extensions/slash-command";
 import { SlashMenuList } from "./slash-menu-list";
 import { Toolbar } from "./toolbar";
 import { EditorBubbleMenu } from "./bubble-menu";
+import { EditorAiDialog } from "@/components/ai/editor-ai-dialog";
 
 const lowlight = createLowlight(common);
 
@@ -154,7 +155,8 @@ function findNodePosByTempId(state, tempId) {
   return pos;
 }
 
-export const BlogEditor = forwardRef(function BlogEditor({ content, onChange, editable = true, placeholder }, ref) {
+export const BlogEditor = forwardRef(function BlogEditor({ content, onChange, editable = true, placeholder, aiContext }, ref) {
+  const [aiOpen, setAiOpen] = useState(false);
   const fileInputRef = useRef(null);
   const debouncedEmitRef = useRef(null);
   const slashHandlersRef = useRef({});
@@ -452,8 +454,10 @@ export const BlogEditor = forwardRef(function BlogEditor({ content, onChange, ed
           onInsertProduct={() => editor && insertProductPrompt(editor)}
           focusMode={focusMode}
           onToggleFocusMode={() => setFocusMode((s) => !s)}
+          onAi={() => setAiOpen(true)}
         />
       )}
+      {editable && <EditorAiDialog editor={editor} open={aiOpen} onOpenChange={setAiOpen} context={aiContext} />}
 
       {editable && <EditorBubbleMenu editor={editor} />}
 
