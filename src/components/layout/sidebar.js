@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "motion/react";
@@ -8,6 +8,8 @@ import { ChevronDown, PanelLeftClose, PanelLeftOpen, Sparkles } from "lucide-rea
 import { cn } from "@/lib/utils";
 import navConfig from "@/lib/navConfig";
 import useUiStore from "@/stores/uiStore";
+import { moduleForRoute } from "@/lib/rbac";
+import { usePermissions } from "@/hooks/use-permissions";
 
 function isActive(pathname, href, exact) {
   if (exact) return pathname === href;
@@ -22,6 +24,28 @@ export function Sidebar({ mobileOpen, onCloseMobile }) {
   const pathname = usePathname();
   const collapsed = useUiStore((s) => s.sidebarCollapsed);
   const toggleSidebar = useUiStore((s) => s.toggleSidebar);
+  const { can } = usePermissions();
+
+  // فقط بخش‌هایی که نقش کاربر به آن‌ها دسترسی دارد؛ گروه/سکشنِ خالی هم حذف می‌شود
+  const visibleNav = useMemo(() => {
+    const allowed = (href) => can(moduleForRoute(href), "view");
+    const filtered = [];
+    for (const entry of navConfig) {
+      if (entry.type === "section") {
+        filtered.push(entry);
+      } else if (entry.type === "link") {
+        if (allowed(entry.href)) filtered.push(entry);
+      } else {
+        const items = entry.items.filter((i) => allowed(i.href));
+        if (items.length) filtered.push({ ...entry, items });
+      }
+    }
+    return filtered.filter((entry, i) => {
+      if (entry.type !== "section") return true;
+      const next = filtered[i + 1];
+      return next && next.type !== "section";
+    });
+  }, [can]);
   // Accordion: one group open at a time. A manual choice only lasts for the
   // page it was made on; navigating falls back to the group of the active route.
   const [manual, setManual] = useState({ path: null, id: null });
@@ -47,7 +71,7 @@ export function Sidebar({ mobileOpen, onCloseMobile }) {
 
       <nav className="flex-1 overflow-y-auto scrollbar-none px-3 pb-4">
         <ul className="space-y-0.5">
-          {navConfig.map((entry) => {
+          {visibleNav.map((entry) => {
             if (entry.type === "section") {
               return collapsed ? (
                 <li key={entry.id} aria-hidden className="mx-3 my-2 border-t border-white/10" />

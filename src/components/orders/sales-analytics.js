@@ -24,6 +24,8 @@ import {
   PackageCheck,
   XCircle,
   Boxes,
+  Percent,
+  MapPin,
   CalendarRange,
   X,
 } from "lucide-react";
@@ -57,6 +59,13 @@ const PAYMENT_METHOD_LABELS = {
   offline: "پرداخت غیرآنلاین",
 };
 
+function deltaHint(current = 0, previous = 0) {
+  if (!previous) return current ? "بازه قبل: بدون فروش" : undefined;
+  const pct = Math.round(((current - previous) / previous) * 100);
+  if (pct === 0) return "بدون تغییر نسبت به بازه قبل";
+  return `${formatNumber(Math.abs(pct))}٪ ${pct > 0 ? "افزایش" : "کاهش"} نسبت به بازه قبل`;
+}
+
 export function SalesAnalytics() {
   const router = useRouter();
   const [from, setFrom] = useState(startOfMonth());
@@ -78,6 +87,8 @@ export function SalesAnalytics() {
   const topCategories = data?.topCategories ?? [];
   const topVendors = data?.topVendors ?? [];
   const topCustomers = data?.topCustomers ?? [];
+  const topCities = data?.topCities ?? [];
+  const previous = data?.previous ?? {};
 
   const hasDateFilter = Boolean(from || to);
 
@@ -156,13 +167,15 @@ export function SalesAnalytics() {
         )}
       </div>
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
-        <StatCard icon={Wallet} label="مجموع درآمد" value={formatToman(summary.totalRevenue)} color="violet" isLoading={isLoading} />
-        <StatCard icon={ShoppingBag} label="سفارشات پرداخت‌شده" value={formatNumber(summary.paidOrders)} color="blue" isLoading={isLoading} />
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
+        <StatCard icon={Wallet} label="مجموع درآمد" value={formatToman(summary.totalRevenue)} color="violet" isLoading={isLoading} hint={deltaHint(summary.totalRevenue, previous.totalRevenue)} />
+        <StatCard icon={ShoppingBag} label="سفارشات پرداخت‌شده" value={formatNumber(summary.paidOrders)} color="blue" isLoading={isLoading} hint={deltaHint(summary.paidOrders, previous.paidOrders)} />
         <StatCard icon={Receipt} label="میانگین ارزش سفارش" value={formatToman(summary.avgOrderValue)} color="amber" isLoading={isLoading} />
         <StatCard icon={Boxes} label="تعداد کالای فروخته‌شده" value={formatNumber(summary.totalItemsSold)} color="pink" isLoading={isLoading} />
         <StatCard icon={PackageCheck} label="سفارشات تحویل‌شده" value={formatNumber(summary.deliveredOrders)} color="teal" isLoading={isLoading} />
-        <StatCard icon={XCircle} label="سفارشات لغوشده" value={formatNumber(summary.cancelledOrders)} color="pink" isLoading={isLoading} />
+        <StatCard icon={XCircle} label="سفارشات لغوشده" value={formatNumber(summary.cancelledOrders)} color="pink" isLoading={isLoading} hint={`${formatNumber(summary.cancelRate)}٪ از کل سفارشات`} />
+        <StatCard icon={Percent} label="مجموع تخفیف" value={formatToman(summary.totalDiscount)} color="amber" isLoading={isLoading} />
+        <StatCard icon={ShoppingBag} label="کل سفارشات ثبت‌شده" value={formatNumber(summary.totalOrders)} color="teal" isLoading={isLoading} />
       </div>
 
       <Card className="mt-6">
@@ -322,6 +335,32 @@ export function SalesAnalytics() {
           </CardContent>
         </Card>
       </div>
+
+      <Card className="mt-6">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <MapPin size={16} />
+            شهرهای برتر
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {topCities.length ? (
+            <ul className="divide-y divide-[var(--border)]">
+              {topCities.map((c) => (
+                <li key={c.city} className="flex items-center justify-between py-2.5 text-sm">
+                  <span className="text-[var(--text)]">{c.city}</span>
+                  <span className="flex items-center gap-3">
+                    <span className="text-xs text-[var(--text-faint)]">{formatNumber(c.orders)} سفارش</span>
+                    <span className="font-medium text-[var(--text)]">{formatToman(c.revenue)}</span>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="py-6 text-center text-sm text-[var(--text-faint)]">داده‌ای برای این بازه یافت نشد</p>
+          )}
+        </CardContent>
+      </Card>
 
       <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
         <Card>

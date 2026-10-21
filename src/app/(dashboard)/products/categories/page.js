@@ -14,6 +14,8 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useToast } from "@/components/ui/toast";
 import { CategoryTreePanel } from "@/components/products/category-tree-panel";
 import { SeoContentFields } from "@/components/products/seo-content-fields";
+import { LiveSeoAnalysis } from "@/components/seo/live-seo-analysis";
+import { FieldAi } from "@/components/ai/field-ai";
 
 export default function CategoriesPage() {
   return (
@@ -176,6 +178,12 @@ function CategoryForm({ mode, category, parentId, categories, isPending, onCance
     seoContent: { h1: "", shortDescription: "", faqs: [], ...(category?.seoContent || {}) },
   });
 
+  const parentName = categories.find((c) => c._id === form.parent)?.name || "";
+  const aiContext = { entityType: "category", title: form.name, category: parentName, keyword: form.name };
+  const archiveAi = { entityType: "category", name: form.name, parent: parentName, description: form.description };
+  const slug = category?.slug || "";
+  const path = `/${category?.fullSlug || slug}`;
+
   const handleSubmit = () => {
     if (!form.name.trim()) {
       toast.error("نام دسته‌بندی الزامی است");
@@ -227,7 +235,10 @@ function CategoryForm({ mode, category, parentId, categories, isPending, onCance
           </div>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
-              <Label>توضیحات کوتاه</Label>
+              <div className="flex items-center justify-between">
+                <Label>توضیحات کوتاه</Label>
+                <FieldAi tasks={["rewrite", "expand", "shorten", "proofread", "custom"]} label="بهبود با AI" value={form.description} source={form.description || form.name} context={aiContext} onChange={(v) => setForm((f) => ({ ...f, description: v }))} />
+              </div>
               <Input value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} />
             </div>
             <div>
@@ -254,17 +265,51 @@ function CategoryForm({ mode, category, parentId, categories, isPending, onCance
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
-              <Label>عنوان سئو</Label>
+              <div className="flex items-center justify-between">
+                <Label>عنوان سئو</Label>
+                <FieldAi tasks={["seo-title"]} label="پیشنهاد" value={form.seoTitle} source={form.seoContent.contentHtml || form.description || form.name} context={aiContext} onChange={(v) => setForm((f) => ({ ...f, seoTitle: v }))} />
+              </div>
               <Input value={form.seoTitle} onChange={(e) => setForm((f) => ({ ...f, seoTitle: e.target.value }))} />
             </div>
           </div>
           <div>
-            <Label>توضیحات متا</Label>
+            <div className="flex items-center justify-between">
+              <Label>توضیحات متا</Label>
+              <FieldAi tasks={["meta-description"]} label="پیشنهاد" value={form.seoDescription} source={form.seoContent.contentHtml || form.seoContent.shortDescription || form.description || form.name} context={aiContext} onChange={(v) => setForm((f) => ({ ...f, seoDescription: v }))} />
+            </div>
             <Input value={form.seoDescription} onChange={(e) => setForm((f) => ({ ...f, seoDescription: e.target.value }))} />
           </div>
           <div className="border-t border-[var(--border)] pt-4">
-            <SeoContentFields value={form.seoContent} onChange={(seoContent) => setForm((f) => ({ ...f, seoContent }))} />
+            <SeoContentFields value={form.seoContent} aiContext={archiveAi} onChange={(seoContent) => setForm((f) => ({ ...f, seoContent }))} />
           </div>
+          <LiveSeoAnalysis
+            entityType="category"
+            entityId={category?._id}
+            aiContext={{ entityType: "category", category: parentName }}
+            onApplySuggestion={(sg) => {
+              if (sg.seoTitle) setForm((f) => ({ ...f, seoTitle: sg.seoTitle }));
+              if (sg.metaDescription) setForm((f) => ({ ...f, seoDescription: sg.metaDescription }));
+            }}
+            payload={{
+              entityType: "category",
+              entityId: category?._id || null,
+              title: form.name,
+              label: form.name,
+              seoTitle: form.seoTitle,
+              metaDescription: form.seoDescription,
+              h1: form.seoContent.h1 || form.name,
+              slug,
+              path,
+              contentHtml: form.seoContent.contentHtml || form.description || "",
+              images: form.image ? [{ url: form.image, alt: form.name }] : [],
+              published: form.isActive,
+              taxonomy: {
+                h1: form.seoContent.h1 || "",
+                shortDescription: form.seoContent.shortDescription || "",
+                faqs: (form.seoContent.faqs || []).filter((f) => f.question).length,
+              },
+            }}
+          />
         </CardContent>
       </Card>
 

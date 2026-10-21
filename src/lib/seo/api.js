@@ -21,6 +21,7 @@ export const fetchSeoChecks = () => apiClient.get("/api/admin/seo/checks").then(
 export const fetchSeoTemplateDefaults = () => apiClient.get("/api/admin/seo/templates/defaults").then((r) => r.data);
 export const previewSeoTemplate = (payload) => apiClient.post("/api/admin/seo/templates/preview", payload).then((r) => r.data);
 export const suggestSeoWithAi = (payload) => apiClient.post("/api/admin/seo/ai/suggest", payload).then((r) => r.data);
+export const suggestArchiveWithAi = (payload) => apiClient.post("/api/admin/seo/ai/archive", payload).then((r) => r.data);
 export const fetchAutofixPlan = () => apiClient.get("/api/admin/seo/autofix/plan").then((r) => r.data);
 export const runAutofix = (payload) => apiClient.post("/api/admin/seo/autofix/run", payload).then((r) => r.data);
 export const cancelAutofix = () => apiClient.post("/api/admin/seo/autofix/cancel").then((r) => r.data);

@@ -19,16 +19,15 @@ import {
   disableStaff,
   reactivateStaff,
   deleteStaff,
-  ROLE_LABELS,
 } from "@/lib/staff/api";
-
-const ROLE_OPTIONS = ["support", "admin", "product_manager", "delivery", "blogger", "vendor"];
+import { useRoles } from "@/hooks/use-roles";
 
 export function StaffDetail({ staffId }) {
   const router = useRouter();
   const toast = useToast();
   const queryClient = useQueryClient();
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const { roles, nameOf } = useRoles();
 
   const { data: staff, isLoading } = useQuery({
     queryKey: ["staff-detail-full", staffId],
@@ -78,7 +77,7 @@ export function StaffDetail({ staffId }) {
     <div>
       <PageHeader
         title={staff.name}
-        subtitle={ROLE_LABELS[staff.role] || staff.role}
+        subtitle={nameOf(staff.role)}
         actions={
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => router.push("/staff")}>
@@ -127,10 +126,10 @@ export function StaffDetail({ staffId }) {
                 <Input dir="ltr" value={active.nationalCode} onChange={(e) => setForm({ ...active, nationalCode: e.target.value })} />
               </div>
               <div>
-                <Label>موقعیت شغلی</Label>
+                <Label>نقش (سطح دسترسی)</Label>
                 <Select value={active.role} onChange={(e) => setForm({ ...active, role: e.target.value })}>
-                  {ROLE_OPTIONS.map((r) => (
-                    <option key={r} value={r}>{ROLE_LABELS[r]}</option>
+                  {roles.map((r) => (
+                    <option key={r.key} value={r.key}>{r.name}</option>
                   ))}
                 </Select>
               </div>

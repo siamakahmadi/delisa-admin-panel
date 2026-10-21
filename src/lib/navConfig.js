@@ -24,6 +24,8 @@ import {
   Paintbrush,
   BookText,
   Newspaper,
+  KanbanSquare,
+  Bot,
 } from "lucide-react";
 
 /* Information architecture, grouped into labelled sections.
@@ -31,6 +33,7 @@ import {
    from the sidebar and modules without a real page yet render <ComingSoon />. */
 const navConfig = [
   { type: "link", id: "home", href: "/", label: "داشبورد", icon: LayoutDashboard, exact: true },
+  { type: "link", id: "tasks", href: "/tasks", label: "مدیریت تسک‌ها", icon: KanbanSquare },
 
   { type: "section", id: "sec-sales", label: "فروش" },
   {
@@ -250,6 +253,7 @@ const navConfig = [
       { href: "/ai/settings", label: "تنظیمات" },
     ],
   },
+  { type: "link", id: "agents", href: "/agents", label: "ایجنت‌های هوشمند", icon: Bot },
 
   { type: "section", id: "sec-system", label: "سیستم" },
   {
@@ -274,7 +278,16 @@ const navConfig = [
       { href: "/system/jobs", label: "جاب‌های سرور" },
     ],
   },
-  { type: "link", id: "staff", href: "/staff", label: "کارکنان", icon: UserCog },
+  {
+    type: "group",
+    id: "staff",
+    label: "کارکنان",
+    icon: UserCog,
+    items: [
+      { href: "/staff", label: "همکاران", exact: true },
+      { href: "/staff/roles", label: "نقش‌ها و دسترسی‌ها" },
+    ],
+  },
 ];
 
 export default navConfig;

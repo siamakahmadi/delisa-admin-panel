@@ -16,3 +16,8 @@ export const ROLE_LABELS = {
   blogger: "نویسنده",
   vendor: "فروشنده",
 };
+
+export const fetchRoles = () => apiClient.get("/api/admin/roles").then((r) => r.data);
+export const createRole = (payload) => apiClient.post("/api/admin/roles", payload).then((r) => r.data?.role);
+export const updateRole = (id, payload) => apiClient.put(`/api/admin/roles/${id}`, payload).then((r) => r.data?.role);
+export const deleteRole = (id) => apiClient.delete(`/api/admin/roles/${id}`).then((r) => r.data);

@@ -85,16 +85,6 @@ function SettingsForm({ initial }) {
 
         <div className="grid grid-cols-1 gap-4 pt-2 sm:grid-cols-2">
           <div>
-            <label className="mb-1.5 block text-xs font-medium text-[var(--text-muted)]">حداکثر تعداد موارد مرتبط</label>
-            <Input
-              type="number"
-              min={1}
-              max={24}
-              value={settings.relatedEntitiesLimit}
-              onChange={(e) => setSettings((s) => ({ ...s, relatedEntitiesLimit: Number(e.target.value) || 1 }))}
-            />
-          </div>
-          <div>
             <label className="mb-1.5 block text-xs font-medium text-[var(--text-muted)]">حداکثر تعداد مقالات مرتبط</label>
             <Input
               type="number"

@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { Menu, Moon, Sun, LogOut, User, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import useUiStore from "@/stores/uiStore";
+import { usePermissions } from "@/hooks/use-permissions";
 import { clearSession } from "@/lib/auth";
 import { SeoHealthIndicator } from "@/components/seo/seo-health-indicator";
 import { ChatNotificationBell } from "@/components/support/chat-notification-bell";
@@ -18,6 +19,7 @@ export function Topbar({ user, onOpenMobile }) {
   const router = useRouter();
   const theme = useUiStore((s) => s.theme);
   const toggleTheme = useUiStore((s) => s.toggleTheme);
+  const { can, role } = usePermissions();
 
   const handleLogout = () => {
     clearSession();
@@ -35,8 +37,8 @@ export function Topbar({ user, onOpenMobile }) {
 
       <div className="flex-1" />
 
-      <SeoHealthIndicator />
-      <ChatNotificationBell />
+      {can("seo") && <SeoHealthIndicator />}
+      {can("support") && <ChatNotificationBell />}
 
       <button
         onClick={toggleTheme}
@@ -56,7 +58,7 @@ export function Topbar({ user, onOpenMobile }) {
               <div className="text-xs font-semibold text-[var(--text)]">
                 {user?.name || "ادمین"}
               </div>
-              <div className="text-[11px] text-[var(--text-faint)]">{user?.phone || ""}</div>
+              <div className="text-[11px] text-[var(--text-faint)]">{role?.name || user?.phone || ""}</div>
             </div>
             <ChevronDown size={14} className="text-[var(--text-faint)]" />
           </button>

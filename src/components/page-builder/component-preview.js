@@ -88,6 +88,34 @@ export function ComponentPreview({ type, typeDef, props = {} }) {
     );
   }
 
+  if (t === "button") {
+    const align = props.align === "start" ? "justify-start" : props.align === "end" ? "justify-end" : "justify-center";
+    return (
+      <div className={`flex ${align} rounded-[var(--radius-sm)] bg-[var(--surface-muted)] p-2.5`}>
+        <span
+          className="rounded-full bg-[var(--brand-600)] px-4 py-1.5 text-[11px] font-medium text-white"
+          style={{ backgroundColor: props.backgroundColor || undefined, color: props.textColor || undefined }}
+        >
+          {props.text || "دکمه"}
+        </span>
+      </div>
+    );
+  }
+
+  if (t === "faq") {
+    const items = (props.items || []).filter((i) => i?.question);
+    return (
+      <div className="space-y-1">
+        {(items.length ? items.slice(0, 3) : [{ question: "پرسش نمونه" }]).map((it, i) => (
+          <div key={i} className="flex items-center justify-between rounded-[var(--radius-sm)] bg-[var(--surface-muted)] px-2.5 py-1.5 text-[11px] text-[var(--text)]">
+            <span className="truncate">{it.question}</span>
+            <span className="text-[var(--text-faint)]">{i === 0 ? "−" : "+"}</span>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
   if (t === "countdown") {
     return (
       <div className="flex items-center gap-2 rounded-[var(--radius-sm)] bg-[var(--surface-muted)] p-2.5 text-xs">

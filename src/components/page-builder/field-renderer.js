@@ -95,7 +95,7 @@ function BaseInput({ field, value, onChange }) {
     case "link":
       return <LinkField value={value} onChange={onChange} placeholder={field.placeholder} />;
     case "richtext":
-      return <RichTextEditor value={value?.html ?? value} onChange={({ html }) => onChange(html)} placeholder={field.placeholder} />;
+      return <RichTextEditor value={value?.html ?? value} onChange={({ html }) => onChange(html)} placeholder={field.placeholder} allowH1 />;
     case "productPicker":
       return <PickerField kind="product" value={value} onChange={onChange} />;
     case "categoryPicker":

@@ -19,6 +19,7 @@ import {
   ImageIcon,
   Undo2,
   Redo2,
+  Heading1,
   Heading2,
   Heading3,
   AlignRight,
@@ -62,7 +63,7 @@ function ToolbarButton({ onClick, active, disabled, children, title }) {
   );
 }
 
-export function RichTextEditor({ value, onChange, placeholder = "محتوای تفصیلی را اینجا بنویسید...", disabled, aiContext }) {
+export function RichTextEditor({ value, onChange, placeholder = "محتوای تفصیلی را اینجا بنویسید...", disabled, aiContext, allowH1 = false }) {
   const fileInputRef = useRef(null);
   const [aiOpen, setAiOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -71,7 +72,7 @@ export function RichTextEditor({ value, onChange, placeholder = "محتوای ت
     immediatelyRender: false,
     editable: !disabled,
     extensions: [
-      StarterKit.configure({ heading: { levels: [2, 3] } }),
+      StarterKit.configure({ heading: { levels: allowH1 ? [1, 2, 3] : [2, 3] } }),
       Underline,
       Highlight.configure({ multicolor: false }),
       Link.configure({ openOnClick: false, autolink: true }),
@@ -129,6 +130,11 @@ export function RichTextEditor({ value, onChange, placeholder = "محتوای ت
   return (
     <div className="overflow-hidden rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface)]">
       <div className="flex flex-wrap items-center gap-0.5 border-b border-[var(--border)] bg-[var(--surface-muted)] p-1.5">
+        {allowH1 && (
+          <ToolbarButton title="تیتر ۱" active={editor.isActive("heading", { level: 1 })} onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}>
+            <Heading1 size={15} />
+          </ToolbarButton>
+        )}
         <ToolbarButton title="تیتر ۲" active={editor.isActive("heading", { level: 2 })} onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}>
           <Heading2 size={15} />
         </ToolbarButton>

@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Star, MessageSquare, Clock, CheckCircle2, Check, X, Trash2, Eye, ExternalLink } from "lucide-react";
+import { Star, MessageSquare, Clock, CheckCircle2, Check, X, Trash2, Eye, ExternalLink, ImageOff } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { DataTable } from "@/components/ui/data-table";
@@ -35,6 +35,34 @@ function StarRating({ value }) {
         />
       ))}
     </div>
+  );
+}
+
+function CommentImage({ src, className }) {
+  const [failed, setFailed] = useState(false);
+  if (failed) {
+    return (
+      <a
+        href={src}
+        target="_blank"
+        rel="noreferrer"
+        className={`flex items-center justify-center rounded-[var(--radius-md)] border border-dashed border-[var(--border)] bg-[var(--surface-muted)] text-[10px] text-[var(--text-faint)] ${className}`}
+      >
+        <ImageOff size={16} />
+      </a>
+    );
+  }
+  return (
+    <a href={src} target="_blank" rel="noreferrer" className="shrink-0">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={src}
+        alt="عکس دیدگاه"
+        loading="lazy"
+        onError={() => setFailed(true)}
+        className={`rounded-[var(--radius-md)] border border-[var(--border)] object-cover ${className}`}
+      />
+    </a>
   );
 }
 
@@ -191,10 +219,21 @@ export default function CommentsModerationPage() {
       key: "body",
       header: "متن",
       render: (row) => (
-        <p className="line-clamp-2 max-w-[280px] text-xs text-[var(--text-muted)]">
-          {row.comment.images?.length ? `📷 ${row.comment.images.length} · ` : ""}
-          {row.comment.body}
-        </p>
+        <div className="min-w-[220px] max-w-[320px] space-y-1.5">
+          {row.comment.title ? (
+            <p className="text-xs font-semibold text-[var(--text)]">{row.comment.title}</p>
+          ) : null}
+          <p className="whitespace-pre-wrap break-words text-xs leading-6 text-[var(--text-muted)]">
+            {row.comment.body || "—"}
+          </p>
+          {row.comment.images?.length ? (
+            <div className="flex flex-wrap gap-1.5">
+              {row.comment.images.map((src) => (
+                <CommentImage key={src} src={src} className="h-12 w-12" />
+              ))}
+            </div>
+          ) : null}
+        </div>
       ),
     },
     {
@@ -288,7 +327,7 @@ export default function CommentsModerationPage() {
       />
 
       <Dialog open={!!detail} onOpenChange={(o) => !o && setDetail(null)}>
-        <DialogContent>
+        <DialogContent className="max-h-[88vh] max-w-lg overflow-y-auto">
           {detail && (
             <div>
               <DialogTitle>جزئیات نظر</DialogTitle>
@@ -310,8 +349,11 @@ export default function CommentsModerationPage() {
                     <span className="text-xs text-[var(--text-faint)]">تاریخ: </span>
                     {formatDateTime(detail.comment.createdAt)}
                   </div>
-                  <div className="rounded-[var(--radius-md)] bg-[var(--surface-muted)] p-3 text-[var(--text)]">
-                    {detail.comment.body}
+                  {detail.comment.title ? (
+                    <div className="font-semibold">{detail.comment.title}</div>
+                  ) : null}
+                  <div className="whitespace-pre-wrap break-words rounded-[var(--radius-md)] bg-[var(--surface-muted)] p-3 leading-7 text-[var(--text)]">
+                    {detail.comment.body || "—"}
                   </div>
                   {detail.comment.recommend === true || detail.comment.recommend === false ? (
                     <div className="text-xs">
@@ -321,10 +363,7 @@ export default function CommentsModerationPage() {
                   {detail.comment.images?.length ? (
                     <div className="flex flex-wrap gap-2">
                       {detail.comment.images.map((src) => (
-                        <a key={src} href={src} target="_blank" rel="noreferrer">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src={src} alt="عکس دیدگاه" className="h-24 w-24 rounded-[var(--radius-md)] border border-[var(--border)] object-cover" />
-                        </a>
+                        <CommentImage key={src} src={src} className="h-24 w-24" />
                       ))}
                     </div>
                   ) : null}

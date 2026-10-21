@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus, ImageOff } from "lucide-react";
+import { Plus, ImageOff, ShieldCheck } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { DataTable } from "@/components/ui/data-table";
 import { Button } from "@/components/ui/button";
@@ -12,15 +12,15 @@ import { Input, Label } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/toast";
-import { fetchStaffList, createStaff, ROLE_LABELS } from "@/lib/staff/api";
-
-const ROLE_OPTIONS = ["support", "admin", "product_manager", "delivery", "blogger"];
+import { fetchStaffList, createStaff } from "@/lib/staff/api";
+import { useRoles } from "@/hooks/use-roles";
 
 export default function StaffPage() {
   const router = useRouter();
   const toast = useToast();
   const queryClient = useQueryClient();
 
+  const { roles, nameOf } = useRoles();
   const [createOpen, setCreateOpen] = useState(false);
   const [form, setForm] = useState({ name: "", phone: "", role: "support", nationalCode: "" });
 
@@ -57,7 +57,7 @@ export default function StaffPage() {
           </div>
         ),
       },
-      { key: "role", header: "موقعیت شغلی", render: (row) => ROLE_LABELS[row.role] || row.role },
+      { key: "role", header: "موقعیت شغلی", render: (row) => nameOf(row.role) },
       { key: "phone", header: "شماره تلفن", render: (row) => <span dir="ltr">{row.phone}</span> },
       {
         key: "isOnline",
@@ -70,7 +70,7 @@ export default function StaffPage() {
         render: (row) => (row.isActive ? <Badge variant="success" size="sm" dot>فعال</Badge> : <Badge variant="danger" size="sm" dot>غیرفعال</Badge>),
       },
     ],
-    []
+    [nameOf]
   );
 
   return (
@@ -79,10 +79,16 @@ export default function StaffPage() {
         title="کارکنان"
         subtitle="کارکنان و دسترسی‌های داخلی تیم"
         actions={
-          <Button onClick={() => setCreateOpen(true)}>
-            <Plus size={16} />
-            افزودن همکار
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => router.push("/staff/roles")}>
+              <ShieldCheck size={16} />
+              نقش‌ها و دسترسی‌ها
+            </Button>
+            <Button onClick={() => setCreateOpen(true)}>
+              <Plus size={16} />
+              افزودن همکار
+            </Button>
+          </div>
         }
       />
 
@@ -112,10 +118,10 @@ export default function StaffPage() {
               <Input dir="ltr" value={form.nationalCode} onChange={(e) => setForm((f) => ({ ...f, nationalCode: e.target.value }))} />
             </div>
             <div>
-              <Label>موقعیت شغلی</Label>
+              <Label>نقش (سطح دسترسی)</Label>
               <Select value={form.role} onChange={(e) => setForm((f) => ({ ...f, role: e.target.value }))}>
-                {ROLE_OPTIONS.map((r) => (
-                  <option key={r} value={r}>{ROLE_LABELS[r]}</option>
+                {roles.map((r) => (
+                  <option key={r.key} value={r.key}>{r.name}</option>
                 ))}
               </Select>
             </div>

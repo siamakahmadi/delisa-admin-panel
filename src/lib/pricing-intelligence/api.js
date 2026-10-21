@@ -9,7 +9,19 @@ export const fetchPricingWorkbook = async () => {
   try {
     const { data } = await apiClient.get(`${base}/workbook`);
     const remote = data?.workbook;
-    const merged = pickNewerWorkbook(local, remote);
+    const picked = pickNewerWorkbook(local, remote);
+    // عکس محصول را سرور از کاتالوگ می‌خواند؛ نسخه‌ی محلی (localStorage) ممکن است
+    // بدون عکس ذخیره شده باشد و وقتی «جدیدتر» باشد عکس‌ها را از بین می‌برد
+    const remoteImages = new Map(
+      (remote?.rows || []).filter((r) => r.productId && r.image).map((r) => [String(r.productId), r.image])
+    );
+    const merged = {
+      ...picked,
+      rows: (picked.rows || []).map((row) => {
+        const img = row.productId ? remoteImages.get(String(row.productId)) : null;
+        return img ? { ...row, image: img } : row;
+      }),
+    };
     saveLocalWorkbook(merged);
     if (workbookHasRows(merged) && !workbookHasRows(remote)) {
       apiClient.put(`${base}/workbook`, { columns: merged.columns, rows: merged.rows }).catch(() => {});

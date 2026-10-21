@@ -308,6 +308,7 @@ export function SeoSettings() {
           <CardHeader><CardTitle>آرشیوهای خالی (بدون محصول)</CardTitle></CardHeader>
           <CardContent className="space-y-3">
             <Toggle label="noindex,follow خودکار" hint="صفحه‌ی خالی ایندکس نشود ولی لینک‌هایش دنبال شود" checked={s.emptyArchives?.noindex} onChange={(v) => set("emptyArchives.noindex", v)} />
+            <Toggle label="اگر محتوای سئو دارد ایندکس بماند" hint="دسته/برند خالی با توضیح یا FAQ واقعی noindex نشود (soft-404 حساب نمی‌شود و اعتبارش حفظ می‌شود)" checked={s.emptyArchives?.indexWhenHasContent !== false} onChange={(v) => set("emptyArchives.indexWhenHasContent", v)} />
             <Toggle label="نمایش محصولات پیشنهادی" hint="به‌جای «محصولی نیست»: دسته‌های هم‌سطح / پرفروش‌ها" checked={s.emptyArchives?.showSuggestions} onChange={(v) => set("emptyArchives.showSuggestions", v)} />
             <Num label="تعداد محصولات پیشنهادی" value={s.emptyArchives?.suggestionsLimit} min={0} max={24} onChange={(v) => set("emptyArchives.suggestionsLimit", v)} />
           </CardContent>

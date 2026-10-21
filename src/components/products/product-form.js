@@ -10,6 +10,7 @@ import { LiveSeoAnalysis } from "@/components/seo/live-seo-analysis";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Input, Label } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { MoneyInput } from "@/components/ui/money-input";
 import { TagInput } from "@/components/ui/tag-input";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import { JalaliDatePicker } from "@/components/ui/jalali-date-picker";
@@ -402,19 +403,19 @@ export function ProductForm({ product }) {
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
               <div>
                 <Label>کف قیمت</Label>
-                <Input type="number" value={basePriceMin} onChange={(e) => setBasePriceMin(e.target.value)} />
+                <MoneyInput value={basePriceMin} onChange={setBasePriceMin} />
               </div>
               <div>
                 <Label>سقف قیمت</Label>
-                <Input type="number" value={basePriceMax} onChange={(e) => setBasePriceMax(e.target.value)} />
+                <MoneyInput value={basePriceMax} onChange={setBasePriceMax} />
               </div>
               <div>
                 <Label>قیمت نهایی فروش</Label>
-                <Input type="number" value={finalPrice} onChange={(e) => setFinalPrice(e.target.value)} />
+                <MoneyInput value={finalPrice} onChange={setFinalPrice} />
               </div>
               <div>
                 <Label>قبل از تخفیف (اختیاری)</Label>
-                <Input type="number" value={discountPrice} onChange={(e) => setDiscountPrice(e.target.value)} />
+                <MoneyInput value={discountPrice} onChange={setDiscountPrice} />
               </div>
             </div>
           </Section>

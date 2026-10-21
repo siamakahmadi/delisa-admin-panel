@@ -13,7 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input, Label } from "@/components/ui/input";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useToast } from "@/components/ui/toast";
-import { SeoContentFields } from "@/components/products/seo-content-fields";
+import { TaxonomySeoPanel } from "@/components/products/taxonomy-seo-panel";
 import { slugify } from "@/lib/utils";
 
 /**
@@ -21,7 +21,7 @@ import { slugify } from "@/lib/utils";
  * {name, slug, description, isActive, seoTitle, seoDescription, seoContent}
  * shape: Brand and ProductType.
  */
-export function TaxonomyManager({ title, endpoint, queryKey, imageField }) {
+export function TaxonomyManager({ title, endpoint, queryKey, imageField, entityType }) {
   const router = useRouter();
   const toast = useToast();
   const queryClient = useQueryClient();
@@ -168,6 +168,7 @@ export function TaxonomyManager({ title, endpoint, queryKey, imageField }) {
           title={title}
           editing={editing}
           imageField={imageField}
+          entityType={entityType}
           isPending={saveMutation.isPending}
           onCancel={() => {
             setEditing(null);
@@ -189,7 +190,7 @@ export function TaxonomyManager({ title, endpoint, queryKey, imageField }) {
   );
 }
 
-function TaxonomyForm({ title, editing, imageField, isPending, onCancel, onSubmit }) {
+function TaxonomyForm({ title, editing, imageField, entityType, isPending, onCancel, onSubmit }) {
   const toast = useToast();
   const [form, setForm] = useState({
     name: editing?.name || "",
@@ -260,17 +261,7 @@ function TaxonomyForm({ title, editing, imageField, isPending, onCancel, onSubmi
           <CardTitle>تنظیمات سئو</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div>
-            <Label>عنوان سئو</Label>
-            <Input value={form.seoTitle} onChange={(e) => setForm((f) => ({ ...f, seoTitle: e.target.value }))} />
-          </div>
-          <div>
-            <Label>توضیحات متا</Label>
-            <Input value={form.seoDescription} onChange={(e) => setForm((f) => ({ ...f, seoDescription: e.target.value }))} />
-          </div>
-          <div className="border-t border-[var(--border)] pt-4">
-            <SeoContentFields value={form.seoContent} onChange={(seoContent) => setForm((f) => ({ ...f, seoContent }))} />
-          </div>
+          <TaxonomySeoPanel entityType={entityType} entityId={editing?._id} name={form.name} slug={editing?.slug || slugify(form.name)} image={form[imageField]} form={form} setForm={setForm} />
         </CardContent>
       </Card>
 

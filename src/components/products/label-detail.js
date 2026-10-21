@@ -16,7 +16,8 @@ import { useToast } from "@/components/ui/toast";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { useCategories } from "@/hooks/use-taxonomies";
 import { formatToman, cn } from "@/lib/utils";
-import { SeoContentFields } from "@/components/products/seo-content-fields";
+import { TaxonomySeoPanel } from "@/components/products/taxonomy-seo-panel";
+import { CategoryTreeSelect } from "@/components/products/category-tree-select";
 
 export function LabelDetail({ id }) {
   const { data: tag, isLoading } = useQuery({
@@ -50,6 +51,7 @@ function LabelEditor({ tag, id }) {
     seoDescription: tag.seoDescription || "",
     seoContent: { h1: "", shortDescription: "", faqs: [], ...(tag.seoContent || {}) },
     isActive: tag.isActive !== false,
+    filterCategories: (tag.filterCategories ?? []).map((c) => String(c?._id || c)),
   });
   const [productIds, setProductIds] = useState((tag.products ?? []).map((p) => p._id));
   const [assignedProducts, setAssignedProducts] = useState(tag.products ?? []);
@@ -80,6 +82,7 @@ function LabelEditor({ tag, id }) {
         seoDescription: form.seoDescription,
         seoContent: form.seoContent,
         isActive: form.isActive,
+        filterCategories: form.filterCategories,
       }),
     onSuccess: () => {
       toast.success("اطلاعات ذخیره شد");
@@ -179,6 +182,30 @@ function LabelEditor({ tag, id }) {
               <Button loading={saveInfoMutation.isPending} onClick={() => saveInfoMutation.mutate()}>
                 <Save size={16} />
                 ذخیره اطلاعات
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>نمایش در فیلترهای آرشیو</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-xs leading-6 text-[var(--text-muted)]">
+              اگر هیچ دسته‌ای انتخاب نشود، این برچسب در فیلترهای همه‌ی صفحه‌های آرشیو پیشنهاد می‌شود. اگر دسته انتخاب کنید
+              (مثلاً «مراقبت پوست» برای «پوست چرب»)، فقط داخل همان دسته‌ها و زیردسته‌هایشان به‌عنوان فیلتر نمایش داده
+              می‌شود و مثلاً در «مراقبت مو» نمی‌آید. صفحه‌ی خود برچسب تغییری نمی‌کند.
+            </p>
+            <CategoryTreeSelect
+              categories={categories ?? []}
+              value={form.filterCategories}
+              onChange={(v) => setForm((f) => ({ ...f, filterCategories: v }))}
+            />
+            <div className="flex justify-end">
+              <Button loading={saveInfoMutation.isPending} onClick={() => saveInfoMutation.mutate()}>
+                <Save size={16} />
+                ذخیره
               </Button>
             </div>
           </CardContent>
@@ -290,17 +317,7 @@ function LabelEditor({ tag, id }) {
               </span>
               <input type="checkbox" checked={form.isActive} onChange={(e) => setForm((f) => ({ ...f, isActive: e.target.checked }))} className="h-4 w-4 accent-[var(--brand-600)]" />
             </label>
-            <div>
-              <Label>عنوان سئو</Label>
-              <Input value={form.seoTitle} onChange={(e) => setForm((f) => ({ ...f, seoTitle: e.target.value }))} />
-            </div>
-            <div>
-              <Label>توضیحات متا</Label>
-              <Input value={form.seoDescription} onChange={(e) => setForm((f) => ({ ...f, seoDescription: e.target.value }))} />
-            </div>
-            <div className="border-t border-[var(--border)] pt-4">
-              <SeoContentFields value={form.seoContent} onChange={(seoContent) => setForm((f) => ({ ...f, seoContent }))} />
-            </div>
+            <TaxonomySeoPanel entityType="tag" entityId={id} name={form.title} slug={tag.slug} form={form} setForm={setForm} />
             <div className="flex justify-end">
               <Button loading={saveInfoMutation.isPending} onClick={() => saveInfoMutation.mutate()}>
                 <Save size={16} />

@@ -127,6 +127,11 @@ function MessageBubble({ message }) {
               }`
         }`}
       >
+        {!isCard && (
+          <div className={`mb-1 text-[10px] font-semibold ${isStaff ? "text-white/80" : "text-[var(--text-muted)]"}`}>
+            {isStaff ? "پشتیبانی" : message.sender?.name || (message.senderModel === "GuestSession" ? "مهمان" : "مشتری")}
+          </div>
+        )}
         <ChatMessageBody message={message} />
         <div className={`mt-1.5 flex items-center gap-1 text-[10px] ${isStaff && !isCard ? "text-white/70" : "text-[var(--text-faint)]"}`}>
           {formatDateTime(message.createdAt)}
