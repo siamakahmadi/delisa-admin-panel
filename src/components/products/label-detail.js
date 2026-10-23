@@ -17,6 +17,7 @@ import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { useCategories } from "@/hooks/use-taxonomies";
 import { formatToman, cn } from "@/lib/utils";
 import { TaxonomySeoPanel } from "@/components/products/taxonomy-seo-panel";
+import { ArchivePageCard } from "@/components/page-builder/archive-page-card";
 import { CategoryTreeSelect } from "@/components/products/category-tree-select";
 
 export function LabelDetail({ id }) {
@@ -302,6 +303,8 @@ function LabelEditor({ tag, id }) {
             </div>
           </CardContent>
         </Card>
+
+        <ArchivePageCard type="tag" entity={tag} />
 
         <Card>
           <CardHeader>

@@ -19,6 +19,28 @@ const DEFAULTS = {
   relatedArticlesLimit: 4,
 };
 
+const CARD_DEFAULTS = {
+  showCover: true,
+  showCategory: false,
+  showTitle: true,
+  showExcerpt: true,
+  showAuthor: true,
+  showReadingTime: true,
+  showDate: false,
+  showViewAll: true,
+};
+
+const CARD_FIELDS = [
+  ["showCover", "تصویر شاخص"],
+  ["showTitle", "عنوان"],
+  ["showExcerpt", "خلاصه‌ی مقاله"],
+  ["showAuthor", "نویسنده"],
+  ["showReadingTime", "زمان مطالعه"],
+  ["showDate", "تاریخ انتشار"],
+  ["showCategory", "دسته‌بندی مقاله"],
+  ["showViewAll", "دکمه‌ی «مشاهده همه»"],
+];
+
 function ToggleRow({ label, hint, checked, onChange }) {
   return (
     <div className="flex items-center justify-between rounded-[var(--radius-md)] bg-[var(--surface-muted)] p-3">
@@ -44,7 +66,7 @@ export default function TaxonomySeoSettingsPage() {
         subtitle="این سوییچ‌ها سراسری هستند و روی همه صفحات فرود سئو اعمال می‌شوند؛ هر مورد می‌تواند در ویرایشگر خودش این تنظیم را override کند."
       />
 
-      {isLoading ? <Skeleton className="h-80 w-full" /> : <SettingsForm initial={{ ...DEFAULTS, ...(data?.taxonomyPages || {}) }} />}
+      {isLoading ? <Skeleton className="h-80 w-full" /> : <SettingsForm initial={{ ...DEFAULTS, ...(data?.taxonomyPages || {}), articleCard: { ...CARD_DEFAULTS, ...(data?.taxonomyPages?.articleCard || {}) } }} />}
     </div>
   );
 }
@@ -93,6 +115,21 @@ function SettingsForm({ initial }) {
               value={settings.relatedArticlesLimit}
               onChange={(e) => setSettings((s) => ({ ...s, relatedArticlesLimit: Number(e.target.value) || 1 }))}
             />
+          </div>
+        </div>
+
+        <div className="pt-2">
+          <p className="mb-2 text-sm font-semibold text-[var(--text)]">نمایش کارت مقالات مرتبط</p>
+          <p className="mb-3 text-xs text-[var(--text-faint)]">روی همه‌ی جاهایی که مقالات مرتبط نشان داده می‌شود (دسته، برند، برچسب، صفحه‌ی مقاله و ...) اعمال می‌شود.</p>
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+            {CARD_FIELDS.map(([key, label]) => (
+              <ToggleRow
+                key={key}
+                label={label}
+                checked={!!settings.articleCard?.[key]}
+                onChange={(v) => setSettings((s) => ({ ...s, articleCard: { ...s.articleCard, [key]: v } }))}
+              />
+            ))}
           </div>
         </div>
 

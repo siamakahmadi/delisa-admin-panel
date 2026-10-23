@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Home, Smartphone, Flag, Sparkles, Plus, Pencil, Eye, Rocket, PauseCircle, Trash2 } from "lucide-react";
+import { Home, Smartphone, Flag, Sparkles, FolderTree, Tag, Hash, Plus, Pencil, Eye, Rocket, PauseCircle, Trash2 } from "lucide-react";
 import * as pb from "@/lib/page-builder/api";
 import { PageHeader } from "@/components/layout/page-header";
 import { DataTable } from "@/components/ui/data-table";
@@ -16,7 +16,34 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useToast } from "@/components/ui/toast";
 import { formatDate, slugify } from "@/lib/utils";
+import apiClient from "@/lib/apiClient";
 import { AppHomeSettings } from "@/components/page-builder/app-home-settings";
+
+// Page types that replace a category / brand / tag archive: how the admin
+// picks the entity (list endpoint → options) and labels it.
+const ARCHIVE_TARGETS = {
+  category: {
+    label: "دسته‌بندی",
+    short: "دسته",
+    endpoint: "/api/admin/categories",
+    nameOf: (e) => e.name,
+    pathOf: (e) => `/${e.fullSlug || e.slug}`,
+  },
+  brand: {
+    label: "برند",
+    short: "برند",
+    endpoint: "/api/brands",
+    nameOf: (e) => e.name,
+    pathOf: (e) => `/brand/${e.slug}`,
+  },
+  tag: {
+    label: "برچسب",
+    short: "برچسب",
+    endpoint: "/api/admin/tags",
+    nameOf: (e) => e.title,
+    pathOf: (e) => `/tag/${e.slug}`,
+  },
+};
 
 function getPreviewPath(page) {
   // homeMobile has no URL of its own — it's the same / as home, just served
@@ -26,6 +53,7 @@ function getPreviewPath(page) {
   // homeApp is only served to the Delisa Shop app (GET /api/cms/pages/home/app).
   if (page.type === "homeApp") return "اپلیکیشن";
   if (page.type === "suggest") return "/suggest";
+  if (ARCHIVE_TARGETS[page.type]) return page.target?.path || "";
   return `/landing/${page.slug || ""}`;
 }
 
@@ -93,6 +121,8 @@ export default function PageBuilderListPage() {
                 <Smartphone size={14} />
               ) : row.type === "suggest" ? (
                 <Sparkles size={14} />
+              ) : ARCHIVE_TARGETS[row.type] ? (
+                <FolderTree size={14} />
               ) : (
                 <Flag size={14} />
               )}
@@ -108,6 +138,8 @@ export default function PageBuilderListPage() {
                   ? "صفحه اصلی اپلیکیشن"
                   : row.type === "suggest"
                   ? "پیشنهادهای شخصی‌سازی‌شده"
+                  : ARCHIVE_TARGETS[row.type]
+                  ? `صفحه اختصاصی ${ARCHIVE_TARGETS[row.type].short} ${row.target?.name || ""}`
                   : `لندینگ ${row.slug || ""}`}
               </p>
             </div>
@@ -167,7 +199,7 @@ export default function PageBuilderListPage() {
     <div>
       <PageHeader
         title="صفحه‌ساز"
-        subtitle="مدیریت صفحه اصلی و لندینگ‌پیج‌های ساخته‌شده با صفحه‌ساز"
+        subtitle="مدیریت صفحه اصلی، لندینگ‌پیج‌ها و صفحه‌های اختصاصی دسته‌بندی‌ها"
         actions={
           <Button onClick={() => setCreateOpen(true)}>
             <Plus size={16} />
@@ -199,6 +231,9 @@ export default function PageBuilderListPage() {
           <option value="homeApp">صفحه اصلی اپلیکیشن</option>
           <option value="landing">لندینگ</option>
           <option value="suggest">پیشنهادهای شخصی‌سازی‌شده</option>
+          <option value="category">صفحه دسته‌بندی</option>
+          <option value="brand">صفحه برند</option>
+          <option value="tag">صفحه برچسب</option>
         </Select>
       </div>
 
@@ -262,8 +297,27 @@ function CreatePageForm({ onClose, onCreated }) {
   const [slug, setSlug] = useState("");
   const [slugTouched, setSlugTouched] = useState(false);
   const [internalName, setInternalName] = useState("");
+  const [targetId, setTargetId] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+
+  const target = ARCHIVE_TARGETS[type];
+  const { data: targetOptions = [] } = useQuery({
+    queryKey: ["cms-target-options", type],
+    queryFn: async () => {
+      const data = (await apiClient.get(target.endpoint)).data;
+      return Array.isArray(data) ? data : data?.items || data?.brands || data?.tags || [];
+    },
+    enabled: !!target,
+  });
+  const { data: takenTargetIds = [] } = useQuery({
+    queryKey: ["cms-target-pages-taken", type],
+    queryFn: async () => {
+      const res = await pb.fetchPages({ type, limit: 100 });
+      return (res?.pages || []).map((p) => String(p.target?._id));
+    },
+    enabled: !!target,
+  });
 
   const isFixedSlugType = type === "home" || type === "homeMobile" || type === "homeApp" || type === "suggest";
   const finalSlug =
@@ -297,6 +351,10 @@ function CreatePageForm({ onClose, onCreated }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
+    if (target && !targetId) {
+      setError(`${target.label} را انتخاب کنید.`);
+      return;
+    }
     if (type === "landing" && !finalSlug) {
       setError("برای لندینگ، اسلاگ لازم است.");
       return;
@@ -317,7 +375,9 @@ function CreatePageForm({ onClose, onCreated }) {
           : type === "suggest"
           ? "پیشنهادهای شخصی‌سازی‌شده"
           : finalSlug;
-      const payload = { type, title: title || defaultTitle, slug: finalSlug };
+      const payload = target
+        ? { type, targetId, title: title.trim() }
+        : { type, title: title || defaultTitle, slug: finalSlug };
       if (internalName.trim()) payload.internalName = internalName.trim();
       const res = await pb.createPage(payload);
       onCreated(res.page || res);
@@ -378,28 +438,78 @@ function CreatePageForm({ onClose, onCreated }) {
             <p className="font-medium text-[var(--text)]">پیشنهادهای شخصی‌سازی‌شده</p>
             <p className="text-[var(--text-faint)]">در /suggest — بر اساس Beauty Profile هر مشتری</p>
           </button>
+          <button
+            type="button"
+            onClick={() => switchType("category")}
+            className={`rounded-[var(--radius-md)] border p-3 text-start text-xs ${type === "category" ? "border-[var(--brand-500)] bg-[var(--brand-50)]" : "border-[var(--border)]"}`}
+          >
+            <FolderTree size={16} className="mb-1 text-[var(--text-muted)]" />
+            <p className="font-medium text-[var(--text)]">صفحه اختصاصی دسته</p>
+            <p className="text-[var(--text-faint)]">جایگزین آرشیو محصولات همان دسته، در همان آدرس</p>
+          </button>
+          <button
+            type="button"
+            onClick={() => switchType("brand")}
+            className={`rounded-[var(--radius-md)] border p-3 text-start text-xs ${type === "brand" ? "border-[var(--brand-500)] bg-[var(--brand-50)]" : "border-[var(--border)]"}`}
+          >
+            <Tag size={16} className="mb-1 text-[var(--text-muted)]" />
+            <p className="font-medium text-[var(--text)]">صفحه اختصاصی برند</p>
+            <p className="text-[var(--text-faint)]">جایگزین آرشیو محصولات /brand/اسلاگ</p>
+          </button>
+          <button
+            type="button"
+            onClick={() => switchType("tag")}
+            className={`rounded-[var(--radius-md)] border p-3 text-start text-xs ${type === "tag" ? "border-[var(--brand-500)] bg-[var(--brand-50)]" : "border-[var(--border)]"}`}
+          >
+            <Hash size={16} className="mb-1 text-[var(--text-muted)]" />
+            <p className="font-medium text-[var(--text)]">صفحه اختصاصی برچسب</p>
+            <p className="text-[var(--text-faint)]">جایگزین آرشیو محصولات /tag/اسلاگ</p>
+          </button>
         </div>
       </div>
+
+      {target && (
+        <div>
+          <Label>{target.label}</Label>
+          <Select value={targetId} onChange={(e) => setTargetId(e.target.value)}>
+            <option value="">انتخاب {target.label}…</option>
+            {targetOptions.map((e) => {
+              const taken = takenTargetIds.includes(String(e._id));
+              return (
+                <option key={e._id} value={e._id} disabled={taken}>
+                  {target.nameOf(e)} — {target.pathOf(e)}
+                  {taken ? " (صفحه دارد)" : ""}
+                </option>
+              );
+            })}
+          </Select>
+          <p className="mt-1 text-[11px] text-[var(--text-faint)]">
+            تا وقتی صفحه منتشر نشود، آرشیو محصولات همین {target.short} نمایش داده می‌شود. با «لغو انتشار» هر زمان به آرشیو برمی‌گردد.
+          </p>
+        </div>
+      )}
 
       <div>
         <Label>عنوان</Label>
         <Input value={title} onChange={(e) => handleTitleChange(e.target.value)} placeholder={type === "home" ? "مثال: صفحه اصلی دلیسا" : "مثال: جشنواره محصولات آنوا"} autoFocus />
       </div>
 
-      <div>
-        <Label>اسلاگ {isFixedSlugType && <span className="text-[var(--text-faint)]">(خودکار تعیین می‌شود)</span>}</Label>
-        <Input
-          dir="ltr"
-          value={finalSlug}
-          readOnly={isFixedSlugType}
-          onChange={(e) => {
-            setSlugTouched(true);
-            setSlug(slugify(e.target.value));
-          }}
-          placeholder={isFixedSlugType ? finalSlug : "anua-sale"}
-          className={isFixedSlugType ? "opacity-60" : ""}
-        />
-      </div>
+      {!target && (
+        <div>
+          <Label>اسلاگ {isFixedSlugType && <span className="text-[var(--text-faint)]">(خودکار تعیین می‌شود)</span>}</Label>
+          <Input
+            dir="ltr"
+            value={finalSlug}
+            readOnly={isFixedSlugType}
+            onChange={(e) => {
+              setSlugTouched(true);
+              setSlug(slugify(e.target.value));
+            }}
+            placeholder={isFixedSlugType ? finalSlug : "anua-sale"}
+            className={isFixedSlugType ? "opacity-60" : ""}
+          />
+        </div>
+      )}
 
       <div>
         <Label>نام داخلی (اختیاری)</Label>

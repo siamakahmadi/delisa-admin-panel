@@ -23,6 +23,12 @@ export const createTag = (payload) => apiClient.post("/api/admin/blog/tags", pay
 export const updateTag = (id, payload) => apiClient.put(`/api/admin/blog/tags/${id}`, payload).then((r) => r.data?.tag);
 export const deleteTag = (id) => apiClient.delete(`/api/admin/blog/tags/${id}`).then((r) => r.data);
 
+// ---- authors (مدیریت نویسندگان) ----
+export const fetchAuthors = () => apiClient.get("/api/admin/blog/authors").then((r) => r.data?.authors || []);
+export const createAuthor = (payload) => apiClient.post("/api/admin/blog/authors", payload).then((r) => r.data?.author);
+export const updateAuthor = (id, payload) => apiClient.put(`/api/admin/blog/authors/${id}`, payload).then((r) => r.data?.author);
+export const deleteAuthor = (id) => apiClient.delete(`/api/admin/blog/authors/${id}`).then((r) => r.data);
+
 // ---- author profile ----
 export const fetchMyAuthorProfile = () => apiClient.get("/api/admin/blog/me/author-profile").then((r) => r.data?.author);
 export const updateMyAuthorProfile = (payload) => apiClient.put("/api/admin/blog/me/author-profile", payload).then((r) => r.data?.author);

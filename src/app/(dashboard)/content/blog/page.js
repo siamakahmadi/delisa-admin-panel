@@ -140,9 +140,9 @@ export default function BlogListPage() {
               <Tags size={15} />
               تگ‌ها
             </Button>
-            <Button variant="outline" onClick={() => router.push("/content/blog/author-profile")}>
+            <Button variant="outline" onClick={() => router.push("/content/blog/authors")}>
               <UserRound size={15} />
-              پروفایل نویسنده
+              نویسندگان
             </Button>
             <Button onClick={() => router.push("/content/blog/new")}>
               <Plus size={15} />

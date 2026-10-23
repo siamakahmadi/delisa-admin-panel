@@ -94,6 +94,9 @@ export function adaptPageFromAPI(page) {
     internalName: page.internalName || "",
     status: page.status || "",
     publishedAt: page.publishedAt || null,
+    // only for category/brand/tag pages: the entity whose archive this page replaces
+    targetName: page.target?.name || "",
+    targetPath: page.target?.path || "",
     seo: page.seo || {},
     sections: (page.sections || []).map(normalizeSection),
   };

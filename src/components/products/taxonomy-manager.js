@@ -14,6 +14,7 @@ import { Input, Label } from "@/components/ui/input";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useToast } from "@/components/ui/toast";
 import { TaxonomySeoPanel } from "@/components/products/taxonomy-seo-panel";
+import { ArchivePageCard } from "@/components/page-builder/archive-page-card";
 import { slugify } from "@/lib/utils";
 
 /**
@@ -255,6 +256,8 @@ function TaxonomyForm({ title, editing, imageField, entityType, isPending, onCan
           </label>
         </CardContent>
       </Card>
+
+      {editing?._id && entityType === "brand" && <ArchivePageCard type="brand" entity={editing} />}
 
       <Card>
         <CardHeader>

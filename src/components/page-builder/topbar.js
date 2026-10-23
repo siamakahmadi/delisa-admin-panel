@@ -7,6 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { usePageBuilderStore } from "@/lib/page-builder/store";
 import { schedulePageSave, flushPageSave } from "@/lib/page-builder/autosave";
 
+const ARCHIVE_TYPE_LABELS = { category: "دسته", brand: "برند", tag: "برچسب" };
+
 export function Topbar({ onPreview, onPublish, onUnpublish, onDelete, onHistory, onUndo, onRedo, canUndo, canRedo, onSeoSettings, onDeviceLayout }) {
   const router = useRouter();
   const page = usePageBuilderStore((s) => s.page);
@@ -17,7 +19,14 @@ export function Topbar({ onPreview, onPublish, onUnpublish, onDelete, onHistory,
   const isHome = page?.type === "home";
   const isHomeMobile = page?.type === "homeMobile";
   const isHomeApp = page?.type === "homeApp";
-  const path = isHomeApp ? "app" : isHome || isHomeMobile ? "/" : `/landing/${page?.slug || ""}`;
+  const targetKind = ARCHIVE_TYPE_LABELS[page?.type];
+  const path = isHomeApp
+    ? "app"
+    : isHome || isHomeMobile
+    ? "/"
+    : targetKind
+    ? page?.targetPath || ""
+    : `/landing/${page?.slug || ""}`;
 
   return (
     <header className="flex flex-wrap items-center gap-3 border-b border-[var(--border)] bg-[var(--bg-elevated)] px-4 py-2.5">
@@ -37,7 +46,15 @@ export function Topbar({ onPreview, onPublish, onUnpublish, onDelete, onHistory,
         />
         <div className="mt-0.5 flex items-center gap-2">
           <Badge variant={isHome || isHomeMobile || isHomeApp ? "info" : "brand"} size="sm">
-            {isHome ? "صفحه اصلی" : isHomeMobile ? "صفحه اصلی (موبایل)" : isHomeApp ? "صفحه اصلی اپلیکیشن" : "لندینگ"}
+            {isHome
+              ? "صفحه اصلی"
+              : isHomeMobile
+              ? "صفحه اصلی (موبایل)"
+              : isHomeApp
+              ? "صفحه اصلی اپلیکیشن"
+              : targetKind
+              ? `صفحه ${targetKind} ${page?.targetName || ""}`
+              : "لندینگ"}
           </Badge>
           <code dir="ltr" className="text-[11px] text-[var(--text-faint)]">
             {path}

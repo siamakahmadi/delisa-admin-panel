@@ -16,6 +16,7 @@ import { CategoryTreePanel } from "@/components/products/category-tree-panel";
 import { SeoContentFields } from "@/components/products/seo-content-fields";
 import { LiveSeoAnalysis } from "@/components/seo/live-seo-analysis";
 import { FieldAi } from "@/components/ai/field-ai";
+import { ArchivePageCard } from "@/components/page-builder/archive-page-card";
 
 export default function CategoriesPage() {
   return (
@@ -257,6 +258,8 @@ function CategoryForm({ mode, category, parentId, categories, isPending, onCance
           </label>
         </CardContent>
       </Card>
+
+      {mode === "view" && category?._id && <ArchivePageCard type="category" entity={category} />}
 
       <Card>
         <CardHeader>

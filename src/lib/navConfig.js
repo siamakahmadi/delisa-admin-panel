@@ -180,6 +180,7 @@ const navConfig = [
       { href: "/content/blog", label: "مقالات", exact: true },
       { href: "/content/blog/categories", label: "دسته‌بندی‌ها" },
       { href: "/content/blog/tags", label: "تگ‌ها" },
+      { href: "/content/blog/authors", label: "نویسندگان" },
       { href: "/content/blog/author-profile", label: "پروفایل نویسندگی" },
     ],
   },

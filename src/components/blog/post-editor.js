@@ -16,6 +16,7 @@ import { BlogEditor } from "@/components/blog/editor/blog-editor";
 import { FieldAi } from "@/components/ai/field-ai";
 import { CategorySelect } from "@/components/blog/category-select";
 import { TagSelect } from "@/components/blog/tag-select";
+import { AuthorSelect } from "@/components/blog/author-select";
 import { RevisionsPanel } from "@/components/blog/revisions-panel";
 import { fetchPost, createPost, updatePost, checkSlug, uploadBlogImage } from "@/lib/blog/api";
 import { LiveSeoAnalysis } from "@/components/seo/live-seo-analysis";
@@ -49,6 +50,7 @@ export function PostEditor({ mode, postId: initialPostId }) {
   const [coverUploading, setCoverUploading] = useState(false);
   const [tags, setTags] = useState([]);
   const [category, setCategory] = useState(null);
+  const [authorId, setAuthorId] = useState(null);
   const [featured, setFeatured] = useState(false);
 
   const [status, setStatus] = useState("draft");
@@ -90,6 +92,7 @@ export function PostEditor({ mode, postId: initialPostId }) {
     setPublishedAt(post.publishedAt || null);
     setTags(toTagOptions(post.tags));
     setCategory(Array.isArray(post.categories) && post.categories[0] ? post.categories[0]._id || post.categories[0] : null);
+    setAuthorId(post.author ? post.author._id || post.author : null);
 
     const seo = post.seo || {};
     setSeoTitle(seo.title || "");
@@ -163,6 +166,8 @@ export function PostEditor({ mode, postId: initialPostId }) {
         featured,
         tags: (tags || []).map((t) => t.value),
         categories: category ? [category] : [],
+        // خالی = نویسنده‌ی پیش‌فرض (کاربر فعلی) در پست جدید، بدون تغییر در ویرایش
+        ...(authorId ? { author: authorId } : {}),
         meta: { description: excerpt },
         content: snap?.json ?? undefined,
         contentHtml: snap?.html ?? undefined,
@@ -190,7 +195,7 @@ export function PostEditor({ mode, postId: initialPostId }) {
 
       return payload;
     },
-    [title, slug, excerpt, coverUrl, coverAlt, featured, tags, category, seoTitle, seoDescription, seoKeywords, canonicalUrl, robots, ogImage]
+    [title, slug, excerpt, coverUrl, coverAlt, featured, tags, category, authorId, seoTitle, seoDescription, seoKeywords, canonicalUrl, robots, ogImage]
   );
 
   const doSave = useCallback(
@@ -480,6 +485,11 @@ export function PostEditor({ mode, postId: initialPostId }) {
               <div>
                 <Label>تگ‌ها</Label>
                 <TagSelect value={tags} onChange={(v) => { setTags(v); markDirty(); }} />
+              </div>
+              <div>
+                <Label>نویسنده</Label>
+                <AuthorSelect value={authorId} onChange={(v) => { setAuthorId(v); markDirty(); }} />
+                <p className="mt-1 text-[11px] text-[var(--text-faint)]">خالی بماند، نویسنده‌ی پیش‌فرض (پروفایل شما) ثبت می‌شود. نویسنده‌ها را از «بلاگ ← نویسندگان» اضافه کنید.</p>
               </div>
             </CardContent>
           </Card>
